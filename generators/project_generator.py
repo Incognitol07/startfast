@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .base_generator import BaseGenerator
 from .file_generators import *
+from .file_generators.environment_generator import EnvironmentGenerator
 from .template_manager import TemplateManager
 from .config import ProjectConfig, logger
 
@@ -26,6 +27,7 @@ class ProjectGenerator(BaseGenerator):
         """Initialize all file generators"""
         self.generators = {
             "requirements": RequirementsGenerator(self.config),
+            "environment": EnvironmentGenerator(self.config),
             "main": MainAppGenerator(self.config),
             "config": ConfigGenerator(self.config),
             "database": DatabaseGenerator(self.config),

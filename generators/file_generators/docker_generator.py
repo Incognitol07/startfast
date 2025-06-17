@@ -105,28 +105,25 @@ networks:
 
 volumes:
 {volumes}
-"""
-
-        # Customize based on database type
+"""  # Customize based on database type
         database_url, database_service, database_service_definition, volumes = (
             self._get_database_config()
         )
-        additional_services = (
-            self._get_additional_services()
-        )  # Create snake_case version of project name
+
+        additional_services = self._get_additional_services()
+
+        # Create snake_case version of project name
         project_name_snake = (
             self.config.name.lower().replace("-", "_").replace(" ", "_")
         )
 
-        return self.format_template(
-            template.format(
-                project_name_snake=project_name_snake,
-                database_url=database_url,
-                database_service=database_service,
-                database_service_definition=database_service_definition,
-                additional_services=additional_services,
-                volumes=volumes,
-            )
+        return template.format(
+            project_name_snake=project_name_snake,
+            database_url=database_url,
+            database_service=database_service,
+            database_service_definition=database_service_definition,
+            additional_services=additional_services,
+            volumes=volumes,
         )
 
     def _get_database_config(self) -> tuple:

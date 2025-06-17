@@ -20,14 +20,26 @@ class AuthGenerator(BaseGenerator):
         security_content = self._get_security_template()
         self.write_file(f"{self.config.path}/app/core/security.py", security_content)
 
-        # Generate auth models if using JWT or OAuth2
-        if self.config.auth_type in [AuthType.JWT, AuthType.OAUTH2]:
+        # Generate auth models and schemas only if using SQL database and JWT/OAuth2
+        if (
+            self.config.auth_type in [AuthType.JWT, AuthType.OAUTH2]
+            and self.should_generate_sqlalchemy_files()
+        ):
             auth_models_content = self._get_auth_models_template()
             self.write_file(
                 f"{self.config.path}/app/models/auth.py", auth_models_content
             )
 
             auth_schemas_content = self._get_auth_schemas_template()
+            self.write_file(
+                f"{self.config.path}/app/schemas/auth.py", auth_schemas_content
+            )
+        elif self.config.auth_type in [AuthType.JWT, AuthType.OAUTH2]:
+            # For NoSQL databases, generate simplified auth schemas
+            auth_schemas_content = self._get_nosql_auth_schemas_template()
+            self.write_file(
+                f"{self.config.path}/app/schemas/auth.py", auth_schemas_content
+            )
             self.write_file(
                 f"{self.config.path}/app/schemas/auth.py", auth_schemas_content
             )
@@ -354,3 +366,63 @@ class UserLogin(BaseModel):
 '''
 
         return self.format_template(template)
+
+    def _get_nosql_auth_schemas_template(self) -> str:
+        """Get auth schemas template for NoSQL databases"""
+        template = '''"""
+Authentication Schemas for NoSQL Databases
+"""
+
+from typing import Optional
+from pydantic import BaseModel, EmailStr
+
+
+class Token(BaseModel):
+    """Token response schema"""
+    access_token: str
+    token_type: str
+
+
+class TokenData(BaseModel):
+    """Token data schema"""
+    username: Optional[str] = None
+
+
+class UserBase(BaseModel):
+    """User base schema"""
+    email: EmailStr
+    username: Optional[str] = None
+    full_name: Optional[str] = None
+    is_active: bool = True
+    is_superuser: bool = False
+
+
+class UserCreate(UserBase):
+    """User creation schema"""
+    password: str
+
+
+class UserUpdate(BaseModel):
+    """User update schema"""
+    email: Optional[EmailStr] = None
+    username: Optional[str] = None
+    full_name: Optional[str] = None
+    password: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_superuser: Optional[bool] = None
+
+
+class User(UserBase):
+    """User response schema"""
+    id: str  # For MongoDB ObjectId or Redis key
+    
+    class Config:
+        from_attributes = True
+
+
+class UserLogin(BaseModel):
+    """User login schema"""
+    email: EmailStr
+    password: str
+'''
+        return template

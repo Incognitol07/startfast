@@ -58,3 +58,112 @@ class BaseGenerator(ABC):
     def format_template(self, template: str) -> str:
         """Format a template string with project variables"""
         return template.format(**self.get_template_vars())
+
+    def get_database_imports(self) -> dict:
+        """Get database-specific imports based on configuration"""
+        from .config import DatabaseType
+
+        if self.config.database_type in [
+            DatabaseType.SQLITE,
+            DatabaseType.POSTGRESQL,
+            DatabaseType.MYSQL,
+        ]:
+            if self.config.is_async:
+                return {
+                    "session_import": "from sqlalchemy.ext.asyncio import AsyncSession",
+                    "session_type": "AsyncSession",
+                    "base_import": "from app.db.base import BaseModel",
+                    "dependency_import": "from app.db.database import get_db",
+                    "dependency_type": "AsyncSession = Depends(get_db)",
+                }
+            else:
+                return {
+                    "session_import": "from sqlalchemy.orm import Session",
+                    "session_type": "Session",
+                    "base_import": "from app.db.base import BaseModel",
+                    "dependency_import": "from app.db.database import get_db",
+                    "dependency_type": "Session = Depends(get_db)",
+                }
+        elif self.config.database_type == DatabaseType.MONGODB:
+            return {
+                "session_import": (
+                    "from motor.motor_asyncio import AsyncIOMotorClient"
+                    if self.config.is_async
+                    else "from pymongo import MongoClient"
+                ),
+                "session_type": (
+                    "AsyncIOMotorClient" if self.config.is_async else "MongoClient"
+                ),
+                "base_import": (
+                    "from beanie import Document"
+                    if self.config.is_async
+                    else "from mongoengine import Document"
+                ),
+                "dependency_import": "from app.db.database import get_db",
+                "dependency_type": (
+                    "AsyncIOMotorClient = Depends(get_db)"
+                    if self.config.is_async
+                    else "MongoClient = Depends(get_db)"
+                ),
+            }
+        elif self.config.database_type == DatabaseType.REDIS:
+            return {
+                "session_import": (
+                    "import aioredis" if self.config.is_async else "import redis"
+                ),
+                "session_type": (
+                    "aioredis.Redis" if self.config.is_async else "redis.Redis"
+                ),
+                "base_import": "from pydantic import BaseModel",
+                "dependency_import": "from app.db.database import get_redis",
+                "dependency_type": (
+                    "aioredis.Redis = Depends(get_redis)"
+                    if self.config.is_async
+                    else "redis.Redis = Depends(get_redis)"
+                ),
+            }
+
+        # Default fallback
+        return {
+            "session_import": "from sqlalchemy.orm import Session",
+            "session_type": "Session",
+            "base_import": "from app.db.base import BaseModel",
+            "dependency_import": "from app.db.database import get_db",
+            "dependency_type": "Session = Depends(get_db)",
+        }
+
+    def get_model_base_class(self) -> str:
+        """Get the appropriate base class for models"""
+        from .config import DatabaseType
+
+        if self.config.database_type in [
+            DatabaseType.SQLITE,
+            DatabaseType.POSTGRESQL,
+            DatabaseType.MYSQL,
+        ]:
+            return "BaseModel"
+        elif self.config.database_type == DatabaseType.MONGODB:
+            return "Document"
+        elif self.config.database_type == DatabaseType.REDIS:
+            return "BaseModel"  # Pydantic BaseModel for Redis
+
+        return "BaseModel"
+
+    def should_generate_sqlalchemy_files(self) -> bool:
+        """Check if SQLAlchemy files should be generated"""
+        from .config import DatabaseType
+
+        return self.config.database_type in [
+            DatabaseType.SQLITE,
+            DatabaseType.POSTGRESQL,
+            DatabaseType.MYSQL,
+        ]
+
+    def should_generate_auth_models(self) -> bool:
+        """Check if auth models should be generated (requires SQL database)"""
+        from .config import AuthType
+
+        return (
+            self.config.auth_type != AuthType.NONE
+            and self.should_generate_sqlalchemy_files()
+        )
