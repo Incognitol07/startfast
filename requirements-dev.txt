@@ -1,0 +1,13 @@
+# Development dependencies
+black
+isort
+flake8
+mypy
+pytest
+pytest-cov
+pytest-asyncio
+pre-commit
+
+# Package development
+build
+twine
