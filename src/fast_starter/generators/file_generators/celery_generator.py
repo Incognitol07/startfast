@@ -6,6 +6,9 @@ from ...generators.base_generator import BaseGenerator
 class CeleryGenerator(BaseGenerator):
     """Generates Celery configuration for background tasks"""
 
+    def should_generate(self):
+        return self.config.include_celery
+
     def generate(self):
         """Generate Celery files"""
         if not self.config.include_celery:

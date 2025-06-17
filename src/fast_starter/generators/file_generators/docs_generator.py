@@ -6,6 +6,9 @@ from ...generators.base_generator import BaseGenerator
 class DocsGenerator(BaseGenerator):
     """Generates documentation files"""
 
+    def should_generate(self):
+        return self.config.include_docs
+
     def generate(self):
         """Generate documentation files"""
         if not self.config.include_docs:

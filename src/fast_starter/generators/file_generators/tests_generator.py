@@ -6,6 +6,9 @@ from ...generators.base_generator import BaseGenerator
 class TestsGenerator(BaseGenerator):
     """Generates test files"""
 
+    def should_generate(self):
+        return self.config.include_tests
+
     def generate(self):
         """Generate test files"""
         if not self.config.include_tests:

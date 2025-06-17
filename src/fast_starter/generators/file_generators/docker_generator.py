@@ -6,6 +6,9 @@ from ...generators.base_generator import BaseGenerator
 class DockerGenerator(BaseGenerator):
     """Generates Docker files"""
 
+    def should_generate(self):
+        return self.config.include_docker
+
     def generate(self):
         """Generate Docker files"""
         if not self.config.include_docker:

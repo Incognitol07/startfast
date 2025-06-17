@@ -6,6 +6,9 @@ from ...generators.base_generator import BaseGenerator
 class MonitoringGenerator(BaseGenerator):
     """Generates monitoring configuration files"""
 
+    def should_generate(self):
+        return self.config.include_monitoring
+
     def generate(self):
         """Generate monitoring files"""
         if not self.config.include_monitoring:

@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.8"
 license = {text = "MIT"}
 authors = [
-    {name = "FastStarter Team", email = "contact@faststarter.dev"},
+    {name = "FastStarter Team", email = "ab.adelodun@gmail.com"},
 ]
 keywords = ["fastapi", "generator", "template", "project", "scaffolding"]
 classifiers = [
@@ -48,10 +48,10 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/yourusername/fast-starter"
-Repository = "https://github.com/yourusername/fast-starter"
+Homepage = "https://github.com/Incognitol07/fast-starter"
+Repository = "https://github.com/Incognitol07/fast-starter"
 Documentation = "https://fast-starter.readthedocs.io"
-Issues = "https://github.com/yourusername/fast-starter/issues"
+Issues = "https://github.com/Incognitol07/fast-starter/issues"
 
 [project.scripts]
 fast-starter = "fast_starter.cli:main"
