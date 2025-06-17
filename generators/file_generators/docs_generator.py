@@ -52,7 +52,7 @@ This document provides detailed information about the {project_name_pascal} API 
 
 ## Base URL
 
-```
+```plaintext
 http://localhost:8000/api/v1
 ```
 
@@ -63,6 +63,7 @@ http://localhost:8000/api/v1
 ## Common Response Formats
 
 ### Success Response
+
 ```json
 {{
     "message": "Operation completed successfully",
@@ -71,6 +72,7 @@ http://localhost:8000/api/v1
 ```
 
 ### Error Response
+
 ```json
 {{
     "error": "Error type",
@@ -84,9 +86,11 @@ http://localhost:8000/api/v1
 ### Health Check
 
 #### GET /health
+
 Check the health status of the API.
 
 **Response:**
+
 ```json
 {{
     "status": "healthy",
@@ -114,6 +118,7 @@ Check the health status of the API.
 ## Rate Limiting
 
 The API implements rate limiting to ensure fair usage:
+
 - 100 requests per minute for authenticated users
 - 20 requests per minute for unauthenticated users
 
@@ -124,12 +129,14 @@ When rate limit is exceeded, the API returns a `429 Too Many Requests` status co
 For endpoints that return lists, pagination is supported:
 
 **Query Parameters:**
+
 - `page` (integer): Page number (default: 1)
 - `per_page` (integer): Items per page (default: 10, max: 100)
 - `sort_by` (string): Field to sort by
 - `sort_order` (string): Sort order ('asc' or 'desc')
 
 **Response Format:**
+
 ```json
 {{
     "items": [],
@@ -153,6 +160,7 @@ Currently, the API can be consumed using any HTTP client. Official SDKs may be a
 ## Changelog
 
 ### Version 1.0.0
+
 - Initial API release
 - Basic CRUD operations
 - Authentication system
@@ -387,28 +395,32 @@ This guide covers different deployment options for {project_name_pascal}.
 ## Docker Deployment
 
 ### Prerequisites
+
 - Docker and Docker Compose installed
 - Git
 
 ### Quick Start
 
 1. Clone the repository:
-```bash
-git clone <repository-url>
-cd {project_name_snake}
-```
+
+    ```bash
+    git clone <repository-url>
+    cd {project_name_snake}
+    ```
 
 2. Copy environment variables:
-```bash
-cp .env.template .env
-```
+
+    ```bash
+    cp .env.template .env
+    ```
 
 3. Update environment variables in `.env` file with production values.
 
 4. Build and run with Docker Compose:
-```bash
-docker-compose up -d
-```
+
+    ```bash
+    docker-compose up -d
+    ```
 
 The application will be available at `http://localhost:8000`.
 
@@ -451,32 +463,37 @@ For production deployment, consider:
 ### Ubuntu/Debian
 
 1. Install Python {python_version}:
-```bash
-sudo apt update
-sudo apt install python{python_version} python{python_version}-venv
-```
+
+    ```bash
+    sudo apt update
+    sudo apt install python{python_version} python{python_version}-venv
+    ```
 
 2. Create virtual environment:
-```bash
-python{python_version} -m venv venv
-source venv/bin/activate
-```
+
+    ```bash
+    python{python_version} -m venv venv
+    source venv/bin/activate
+    ```
 
 3. Install dependencies:
-```bash
-pip install -r requirements.txt
-```
+
+    ```bash
+    pip install -r requirements.txt
+    ```
 
 4. Set environment variables:
-```bash
-export DATABASE_URL="your-database-url"
-export SECRET_KEY="your-secret-key"
-```
+
+    ```bash
+    export DATABASE_URL="your-database-url"
+    export SECRET_KEY="your-secret-key"
+    ```
 
 5. Run the application:
-```bash
-uvicorn app.main:app --host 0.0.0.0 --port 8000
-```
+
+    ```bash
+    uvicorn app.main:app --host 0.0.0.0 --port 8000
+    ```
 
 ### Using Gunicorn (Production)
 
@@ -497,12 +514,12 @@ Required environment variables for production:
 - `SECRET_KEY`: Secret key for JWT tokens (generate with `openssl rand -hex 32`)
 - `DEBUG`: Set to `False` for production
 - `ALLOWED_ORIGINS`: Comma-separated list of allowed origins
-
 {additional_config}
 
 ## Health Checks
 
 The application provides health check endpoints:
+
 - `/health` - Application health
 - `/api/v1/health` - API health
 
@@ -532,11 +549,13 @@ Use these for load balancer health checks.
 ### Logs
 
 Check application logs:
+
 ```bash
 docker-compose logs app
 ```
 
 Or for traditional deployment:
+
 ```bash
 tail -f /var/log/{project_name_snake}.log
 ```
@@ -605,51 +624,57 @@ tail -f /var/log/{project_name_snake}.log
 
 1. Install PostgreSQL
 2. Create database:
-```sql
-CREATE DATABASE {project_name_snake};
-CREATE USER {project_name_snake}_user WITH PASSWORD 'password';
-GRANT ALL PRIVILEGES ON DATABASE {project_name_snake} TO {project_name_snake}_user;
-```
+
+    ```sql
+    CREATE DATABASE {project_name_snake};
+    CREATE USER {project_name_snake}_user WITH PASSWORD 'password';
+    GRANT ALL PRIVILEGES ON DATABASE {project_name_snake} TO {project_name_snake}_user;
+    ```
 
 3. Set DATABASE_URL:
-```
-DATABASE_URL=postgresql://{project_name_snake}_user:password@localhost/{project_name_snake}
-```"""
+
+    ```env
+    DATABASE_URL=postgresql://{project_name_snake}_user:password@localhost/{project_name_snake}
+    ```"""
 
         elif self.config.database_type.value == "mysql":
             return """### MySQL
 
 1. Install MySQL
 2. Create database:
-```sql
-CREATE DATABASE {project_name_snake};
-CREATE USER '{project_name_snake}_user'@'localhost' IDENTIFIED BY 'password';
-GRANT ALL PRIVILEGES ON {project_name_snake}.* TO '{project_name_snake}_user'@'localhost';
-```
+
+    ```sql
+    CREATE DATABASE {project_name_snake};
+    CREATE USER '{project_name_snake}_user'@'localhost' IDENTIFIED BY 'password';
+    GRANT ALL PRIVILEGES ON {project_name_snake}.* TO '{project_name_snake}_user'@'localhost';
+    ```
 
 3. Set DATABASE_URL:
-```
-DATABASE_URL=mysql://{project_name_snake}_user:password@localhost/{project_name_snake}
-```"""
+
+    ```env
+    DATABASE_URL=mysql://{project_name_snake}_user:password@localhost/{project_name_snake}
+    ```"""
 
         elif self.config.database_type.value == "mongodb":
             return """### MongoDB
 
 1. Install MongoDB
 2. Create database and user:
-```javascript
-use {project_name_snake}
-db.createUser({{
-    user: "{project_name_snake}_user",
-    pwd: "password",
-    roles: ["readWrite"]
-}})
-```
+
+    ```javascript
+    use {project_name_snake}
+    db.createUser({{
+        user: "{project_name_snake}_user",
+        pwd: "password",
+        roles: ["readWrite"]
+    }})
+    ```
 
 3. Set DATABASE_URL:
-```
-DATABASE_URL=mongodb://{project_name_snake}_user:password@localhost:27017/{project_name_snake}
-```"""
+
+    ```env
+    DATABASE_URL=mongodb://{project_name_snake}_user:password@localhost:27017/{project_name_snake}
+    ```"""
 
         elif self.config.database_type.value == "redis":
             return """### Redis
@@ -657,9 +682,10 @@ DATABASE_URL=mongodb://{project_name_snake}_user:password@localhost:27017/{proje
 1. Install Redis
 2. Configure Redis (optional authentication)
 3. Set DATABASE_URL:
-```
-DATABASE_URL=redis://localhost:6379/0
-```"""
+
+    ```env
+    DATABASE_URL=redis://localhost:6379/0
+    ```"""
 
         else:  # SQLite
             return """### SQLite
@@ -764,13 +790,14 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 The API will be available at:
-- **API**: http://localhost:8000
-- **Swagger UI**: http://localhost:8000/docs
-- **ReDoc**: http://localhost:8000/redoc
+
+- **API**: <http://localhost:8000>
+- **Swagger UI**: <http://localhost:8000/docs>
+- **ReDoc**: <http://localhost:8000/redoc>
 
 ## Project Structure
 
-```
+```plaintext
 {project_name_snake}/
 ├── app/
 │   ├── api/                # API endpoints
@@ -795,9 +822,10 @@ The API will be available at:
 ### 1. Feature Development
 
 1. Create feature branch:
-```bash
-git checkout -b feature/your-feature-name
-```
+
+    ```bash
+    git checkout -b feature/your-feature-name
+    ```
 
 2. Make changes and add tests
 3. Run tests locally
@@ -908,6 +936,7 @@ Enable SQL logging by setting `echo=True` in database configuration.
 ### Environment Variables
 
 Add new environment variables to:
+
 1. `app/core/config.py`
 2. `.env.template`
 3. Documentation
@@ -915,6 +944,7 @@ Add new environment variables to:
 ### API Versioning
 
 When creating breaking changes:
+
 1. Create new version directory: `app/api/v2/`
 2. Update main.py to include new router
 3. Maintain backward compatibility
@@ -949,7 +979,7 @@ When creating breaking changes:
             "For development, SQLite is used by default. No additional setup required."
         )
         if self.config.database_type.value != "sqlite":
-            dev_database_setup = f"Set up {self.config.database_type.value} locally or use Docker:\n```bash\ndocker-compose up -d {self.config.database_type.value}\n```"
+            dev_database_setup = f"Set up {self.config.database_type.value} locally or use Docker:\n\n```bash\ndocker-compose up -d {self.config.database_type.value}\n```"
 
         migration_section = ""
         if self.config.is_advanced:
@@ -1039,7 +1069,6 @@ All configuration is done through environment variables, which can be set in a `
 | Variable | Type | Default | Description |
 |----------|------|---------|-------------|
 | `DATABASE_URL` | string | `sqlite:///./app.db` | Database connection URL |
-
 {auth_config}
 
 ### CORS Settings
@@ -1054,33 +1083,37 @@ All configuration is done through environment variables, which can be set in a `
 |----------|------|---------|-------------|
 | `LOG_LEVEL` | string | `INFO` | Logging level |
 | `LOG_FILE` | string | `None` | Log file path (optional) |
-
 {additional_settings}
 
 ## Database URLs
 
 ### SQLite
-```
+
+```env
 DATABASE_URL=sqlite:///./app.db
 ```
 
 ### PostgreSQL
-```
+
+```env
 DATABASE_URL=postgresql://user:password@localhost:5432/dbname
 ```
 
 ### MySQL
-```
+
+```env
 DATABASE_URL=mysql://user:password@localhost:3306/dbname
 ```
 
 ### MongoDB
-```
+
+```env
 DATABASE_URL=mongodb://user:password@localhost:27017/dbname
 ```
 
 ### Redis
-```
+
+```env
 DATABASE_URL=redis://localhost:6379/0
 ```
 
@@ -1089,27 +1122,30 @@ DATABASE_URL=redis://localhost:6379/0
 ### Secret Key
 
 Generate a secure secret key:
+
 ```bash
 openssl rand -hex 32
 ```
 
 Set in environment:
-```
+
+```env
 SECRET_KEY=your-generated-secret-key
 ```
 
 ### CORS Configuration
 
 For production, specify exact origins:
-```
+
+```config
 ALLOWED_ORIGINS=["https://yourdomain.com", "https://app.yourdomain.com"]
 ```
-
 {auth_security}
 
 ## Environment-Specific Configuration
 
 ### Development
+
 ```env
 DEBUG=True
 LOG_LEVEL=DEBUG
@@ -1118,6 +1154,7 @@ ALLOWED_ORIGINS=["http://localhost:3000", "http://localhost:8080"]
 ```
 
 ### Testing
+
 ```env
 DEBUG=True
 LOG_LEVEL=DEBUG
@@ -1125,6 +1162,7 @@ DATABASE_URL=sqlite:///./test.db
 ```
 
 ### Production
+
 ```env
 DEBUG=False
 LOG_LEVEL=INFO
@@ -1156,6 +1194,7 @@ DATABASE_URL=postgresql://user:pass@host:5432/db?pool_size=20&max_overflow=0
 ### Uvicorn Configuration
 
 Production server configuration:
+
 ```bash
 uvicorn app.main:app \\
   --host 0.0.0.0 \\
@@ -1164,9 +1203,7 @@ uvicorn app.main:app \\
   --access-log \\
   --log-level info
 ```
-
 {monitoring_config}
-
 ## Troubleshooting Configuration
 
 ### Common Issues
@@ -1179,6 +1216,7 @@ uvicorn app.main:app \\
 ### Configuration Testing
 
 Test configuration with:
+
 ```python
 from app.core.config import settings
 print(f"Database: {{settings.DATABASE_URL}}")
@@ -1237,6 +1275,7 @@ print(f"Debug mode: {{settings.DEBUG}}")
 Metrics endpoint: `http://localhost:8000/metrics`
 
 Available metrics:
+
 - Request count and duration
 - Database connection pool status
 - Background task metrics
@@ -1244,9 +1283,11 @@ Available metrics:
 ### Health Checks
 
 Configure health check intervals:
-```
+
+```config
 HEALTH_CHECK_INTERVAL=30  # seconds
-```"""
+```
+"""
 
         return template.format(
             auth_config=auth_config,
@@ -1310,7 +1351,7 @@ Please refer to the [Development Guide](docs/development.md) for detailed setup 
 
 Use clear, descriptive commit messages:
 
-```
+```plaintext
 feat: add user authentication system
 fix: resolve database connection issue
 docs: update API documentation
@@ -1388,7 +1429,7 @@ Include:
 - `docs/description` - Documentation updates
 - `refactor/description` - Code refactoring
 
-### Testing
+### Application Testing
 
 ```bash
 # Run tests
@@ -1438,6 +1479,7 @@ For API changes:
 ## Recognition
 
 Contributors are recognized in:
+
 - Repository contributors list
 - Release notes (for significant contributions)
 - Project documentation
@@ -1453,7 +1495,7 @@ Contributors are recognized in:
 
 By contributing, you agree that your contributions will be licensed under the same license as the project.
 
-## Thank You!
+## Thank You
 
 Your contributions make this project better for everyone. Thank you for taking the time to contribute!
 """

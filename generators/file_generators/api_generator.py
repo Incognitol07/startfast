@@ -74,7 +74,7 @@ router.include_router(auth_router, prefix="/auth", tags=["authentication"])
 """
 
         # Add database imports
-        database_imports = "from app.db.database import get_db"  # Add CRUD endpoints for different project types
+        database_imports = "from app.db.database import get_db \nfrom app.models.auth import User"  # Add CRUD endpoints for different project types
         if self.config.project_type in [ProjectType.CRUD, ProjectType.API]:
             crud_endpoints = self._get_crud_endpoints()
             model_imports = "from app.models.item import Item"
@@ -107,7 +107,7 @@ router.include_router(auth_router, prefix="/auth", tags=["authentication"])
 async def create_item(
     item: ItemCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user) if auth_imports else None
+    current_user: User = {{Depends(get_current_user) if {auth_imports} else None}}
 ):
     """Create a new item"""
     from app.services.item_service import create_item
@@ -119,17 +119,17 @@ async def read_items(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user) if auth_imports else None
+    current_user: User = {{Depends(get_current_user) if {auth_imports} else None}}
 ):
     """Get all items"""
     from app.services.item_service import get_items    return await get_items(db, skip=skip, limit=limit)
 
 
-@router.get("/items/{item_id}", response_model=ItemResponse)
+@router.get("/items/{{item_id}}", response_model=ItemResponse)
 async def read_item(
     item_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user) if auth_imports else None
+    current_user: User = {{Depends(get_current_user) if {auth_imports} else None}}
 ):
     """Get item by ID"""
     from app.services.item_service import get_item
@@ -138,12 +138,12 @@ async def read_item(
         raise HTTPException(status_code=404, detail="Item not found")    return item
 
 
-@router.put("/items/{item_id}", response_model=ItemResponse)
+@router.put("/items/{{item_id}}", response_model=ItemResponse)
 async def update_item(
     item_id: int,
     item: ItemUpdate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user) if auth_imports else None
+    current_user: User = {{Depends(get_current_user) if {auth_imports} else None}}
 ):
     """Update item by ID"""
     from app.services.item_service import update_item
@@ -153,11 +153,11 @@ async def update_item(
     return updated_item
 
 
-@router.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/items/{{item_id}}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_item(
     item_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user) if auth_imports else None
+    current_user: User = {{Depends(get_current_user) if {auth_imports} else None}}
 ):
     """Delete item by ID"""
     from app.services.item_service import delete_item
@@ -171,7 +171,7 @@ async def delete_item(
 def create_item(
     item: ItemCreate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) if auth_imports else None
+    current_user: User = {{Depends(get_current_user) if {auth_imports} else None}}
 ):
     """Create a new item"""
     from app.services.item_service import create_item
@@ -183,17 +183,17 @@ def read_items(
     skip: int = 0,
     limit: int = 100,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) if auth_imports else None
+    current_user: User = {{Depends(get_current_user) if {auth_imports} else None}}
 ):
     """Get all items"""
     from app.services.item_service import get_items    return get_items(db, skip=skip, limit=limit)
 
 
-@router.get("/items/{item_id}", response_model=ItemResponse)
+@router.get("/items/{{item_id}}", response_model=ItemResponse)
 def read_item(
     item_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) if auth_imports else None
+    current_user: User = {{Depends(get_current_user) if {auth_imports} else None}}
 ):
     """Get item by ID"""
     from app.services.item_service import get_item
@@ -203,12 +203,12 @@ def read_item(
     return item
 
 
-@router.put("/items/{item_id}", response_model=ItemResponse)
+@router.put("/items/{{item_id}}", response_model=ItemResponse)
 def update_item(
     item_id: int,
     item: ItemUpdate,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) if auth_imports else None
+    current_user: User = {{Depends(get_current_user) if {auth_imports} else None}}
 ):
     """Update item by ID"""
     from app.services.item_service import update_item
@@ -218,11 +218,11 @@ def update_item(
     return updated_item
 
 
-@router.delete("/items/{item_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/items/{{item_id}}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_item(
     item_id: int,
     db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) if auth_imports else None
+    current_user: User = {{Depends(get_current_user) if {auth_imports} else None}}
 ):
     """Delete item by ID"""
     from app.services.item_service import delete_item
@@ -237,7 +237,7 @@ def delete_item(
 @router.post("/predict")
 async def predict(
     input_data: dict,
-    current_user: User = Depends(get_current_user) if auth_imports else None
+    current_user: User = {{Depends(get_current_user) if {auth_imports} else None}}
 ):
     """Make ML prediction"""
     from app.services.prediction_service import make_prediction    try:
@@ -249,7 +249,7 @@ async def predict(
 
 @router.get("/model/info")
 async def get_model_info(
-    current_user: User = Depends(get_current_user) if auth_imports else None
+    current_user: User = {{Depends(get_current_user) if {auth_imports} else None}}
 ):    """Get ML model information"""
     return {
         "model_name": "DefaultModel",
@@ -274,7 +274,7 @@ async def service_status():
 @router.post("/process")
 async def process_data(
     data: dict,
-    current_user: User = Depends(get_current_user) if auth_imports else None
+    current_user: User = {{Depends(get_current_user) if {auth_imports} else None}}
 ):
     """Process data"""
     from app.services.processing_service import process_data

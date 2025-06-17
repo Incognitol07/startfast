@@ -144,7 +144,7 @@ alerting:
         "type": "graph",
         "targets": [
           {{
-            "expr": "rate(http_requests_total{{status=~\"4..|5..\"}}[5m])",
+            "expr": "rate(http_requests_total{{status=~\\"4..|5..\\"}}[5m])",
             "legendFormat": "Error rate"
           }}
         ],
