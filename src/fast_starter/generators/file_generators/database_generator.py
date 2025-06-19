@@ -78,7 +78,8 @@ async def get_db():
             await session.commit()
         except Exception:
             await session.rollback()
-            raise        finally:
+            raise
+        finally:
             await session.close()
 
 
