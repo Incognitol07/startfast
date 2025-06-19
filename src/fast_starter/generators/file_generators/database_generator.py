@@ -78,9 +78,28 @@ async def get_db():
             await session.commit()
         except Exception:
             await session.rollback()
-            raise
-        finally:
+            raise        finally:
             await session.close()
+
+
+async def init_db():
+    """Initialize database - create all tables"""
+    from app.db.base import Base
+    
+    async with engine.begin() as conn:
+        # Import all models to ensure they are registered with Base
+        import app.models.auth  # noqa: F401
+        
+        # Create all tables
+        await conn.run_sync(Base.metadata.create_all)
+
+
+async def drop_db():
+    """Drop all tables - useful for testing"""
+    from app.db.base import Base
+    
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
 '''
         else:
             template = '''"""
@@ -113,9 +132,25 @@ def get_db() -> Session:
         db.commit()
     except Exception:
         db.rollback()
-        raise
-    finally:
+        raise    finally:
         db.close()
+
+
+def init_db():
+    """Initialize database - create all tables"""
+    from app.db.base import Base
+    
+    # Import all models to ensure they are registered with Base
+    import app.models.auth  # noqa: F401
+    
+    # Create all tables
+    Base.metadata.create_all(bind=engine)
+
+
+def drop_db():
+    """Drop all tables - useful for testing"""
+    from app.db.base import Base
+    Base.metadata.drop_all(bind=engine)
 '''
 
         return template

@@ -161,6 +161,35 @@ structlog.configure(
         """Get startup events"""
         events = []
 
+        # Add database initialization for SQL databases
+        from ...core.config import DatabaseType
+
+        if self.config.database_type in [
+            DatabaseType.SQLITE,
+            DatabaseType.POSTGRESQL,
+            DatabaseType.MYSQL,
+        ]:
+            if self.config.is_async:
+                events.append(
+                    """
+@app.on_event("startup")
+async def init_database():
+    \"\"\"Initialize database on startup\"\"\"
+    from app.db.database import init_db
+    await init_db()
+    print("✅ Database initialized successfully")"""
+                )
+            else:
+                events.append(
+                    """
+@app.on_event("startup")
+def init_database():
+    \"\"\"Initialize database on startup\"\"\"
+    from app.db.database import init_db
+    init_db()
+    print("✅ Database initialized successfully")"""
+                )
+
         if self.config.include_celery:
             events.append(
                 """
