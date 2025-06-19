@@ -23,13 +23,6 @@ class SchemasGenerator(BaseGenerator):
             auth_schemas_content = self._get_auth_schemas_template()
             self.write_file(
                 f"{self.config.path}/app/schemas/auth.py", auth_schemas_content
-            )  # Generate item schemas for CRUD projects
-        from ...core.config import ProjectType
-
-        if self.config.project_type in [ProjectType.CRUD, ProjectType.API]:
-            item_schemas_content = self._get_item_schemas_template()
-            self.write_file(
-                f"{self.config.path}/app/schemas/item.py", item_schemas_content
             )
 
     def _get_base_schemas_template(self) -> str:
@@ -152,54 +145,6 @@ class TokenData(BaseModel):
     """Token data schema"""
     user_id: Optional[int] = None
     email: Optional[str] = None
-'''
-        return template
-
-    def _get_item_schemas_template(self) -> str:
-        """Get item schemas template"""
-        template = '''"""
-Item schemas for CRUD operations
-"""
-
-from typing import Optional
-from pydantic import BaseModel, Field
-from . import BaseSchema, TimestampMixin, IDMixin
-
-
-class ItemBase(BaseSchema):
-    """Base item schema"""
-    title: str = Field(..., min_length=1, max_length=100)
-    description: Optional[str] = Field(None, max_length=500)
-    is_active: bool = True
-
-
-class ItemCreate(ItemBase):
-    """Item creation schema"""
-    pass
-
-
-class ItemUpdate(BaseModel):
-    """Item update schema"""
-    title: Optional[str] = Field(None, min_length=1, max_length=100)
-    description: Optional[str] = Field(None, max_length=500)
-    is_active: Optional[bool] = None
-
-
-class ItemInDB(ItemBase, IDMixin, TimestampMixin):
-    """Item schema for database representation"""
-    owner_id: Optional[int] = None
-
-
-class Item(ItemBase, IDMixin, TimestampMixin):
-    """Item schema for API responses"""
-    owner_id: Optional[int] = None
-
-
-class ItemFilter(BaseModel):
-    """Item filtering schema"""
-    title: Optional[str] = None
-    is_active: Optional[bool] = None
-    owner_id: Optional[int] = None
 '''
         return template
 

@@ -12,13 +12,6 @@ class ServicesGenerator(BaseGenerator):
 
     def generate(self):
         """Generate service files"""
-        # Generate base item service for CRUD operations
-        if self.config.project_type in [ProjectType.CRUD, ProjectType.API]:
-            item_service_content = self._get_item_service_template()
-            self.write_file(
-                f"{self.config.path}/app/services/item_service.py", item_service_content
-            )
-
         # Generate ML service for ML API
         if self.config.project_type == ProjectType.ML_API:
             ml_service_content = self._get_ml_service_template()
@@ -35,258 +28,6 @@ class ServicesGenerator(BaseGenerator):
                 processing_service_content,
             )
 
-    def _get_item_service_template(self) -> str:
-        """Get item service template"""
-        if self.config.database_type in [
-            DatabaseType.SQLITE,
-            DatabaseType.POSTGRESQL,
-            DatabaseType.MYSQL,
-        ]:
-            return self._get_sqlalchemy_item_service()
-        elif self.config.database_type == DatabaseType.MONGODB:
-            return self._get_mongodb_item_service()
-        return ""
-
-    def _get_sqlalchemy_item_service(self) -> str:
-        """Get SQLAlchemy item service"""
-        if self.config.is_async:
-            template = '''"""
-Item Service (Async SQLAlchemy)
-Business logic for item operations
-"""
-
-from typing import List, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
-from sqlalchemy import func
-from app.models.item import Item
-from app.schemas.item import ItemCreate, ItemUpdate
-
-
-async def create_item(db: AsyncSession, item_data: ItemCreate) -> Item:
-    """Create a new item"""
-    item = Item(**item_data.model_dump())
-    db.add(item)
-    await db.commit()
-    await db.refresh(item)
-    return item
-
-
-async def get_item(db: AsyncSession, item_id: int) -> Optional[Item]:
-    """Get item by ID"""
-    result = await db.execute(select(Item).filter(Item.id == item_id))
-    return result.scalars().first()
-
-
-async def get_items(
-    db: AsyncSession, 
-    skip: int = 0, 
-    limit: int = 100,
-    search: Optional[str] = None,
-    category: Optional[str] = None,
-    is_active: Optional[bool] = None
-) -> List[Item]:
-    """Get items with pagination and filters"""
-    query = select(Item)
-    
-    # Apply filters
-    if search:
-        query = query.filter(Item.title.contains(search))
-    if category:
-        query = query.filter(Item.category == category)
-    if is_active is not None:
-        query = query.filter(Item.is_active == is_active)
-    
-    # Apply pagination
-    query = query.offset(skip).limit(limit)
-    
-    result = await db.execute(query)
-    return result.scalars().all()
-
-
-async def update_item(db: AsyncSession, item_id: int, item_data: ItemUpdate) -> Optional[Item]:
-    """Update item by ID"""
-    result = await db.execute(select(Item).filter(Item.id == item_id))
-    item = result.scalars().first()
-    
-    if not item:
-        return None
-    
-    # Update fields
-    update_data = item_data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(item, field, value)
-    
-    await db.commit()
-    await db.refresh(item)
-    return item
-
-
-async def delete_item(db: AsyncSession, item_id: int) -> bool:
-    """Delete item by ID"""
-    result = await db.execute(select(Item).filter(Item.id == item_id))
-    item = result.scalars().first()
-    
-    if not item:
-        return False
-    
-    await db.delete(item)
-    await db.commit()
-    return True
-'''
-        else:
-            template = '''"""
-Item Service (Sync SQLAlchemy)
-Business logic for item operations
-"""
-
-from typing import List, Optional
-from sqlalchemy.orm import Session
-from app.models.item import Item
-from app.schemas.item import ItemCreate, ItemUpdate
-
-
-def create_item(db: Session, item_data: ItemCreate) -> Item:
-    """Create a new item"""
-    item = Item(**item_data.model_dump())
-    db.add(item)
-    db.commit()
-    db.refresh(item)
-    return item
-
-
-def get_item(db: Session, item_id: int) -> Optional[Item]:
-    """Get item by ID"""
-    return db.query(Item).filter(Item.id == item_id).first()
-
-
-def get_items(
-    db: Session, 
-    skip: int = 0, 
-    limit: int = 100,
-    search: Optional[str] = None,
-    category: Optional[str] = None,
-    is_active: Optional[bool] = None
-) -> List[Item]:
-    """Get items with pagination and filters"""
-    query = db.query(Item)
-    
-    # Apply filters
-    if search:
-        query = query.filter(Item.title.contains(search))
-    if category:
-        query = query.filter(Item.category == category)
-    if is_active is not None:
-        query = query.filter(Item.is_active == is_active)
-    
-    # Apply pagination
-    return query.offset(skip).limit(limit).all()
-
-
-def update_item(db: Session, item_id: int, item_data: ItemUpdate) -> Optional[Item]:
-    """Update item by ID"""
-    item = db.query(Item).filter(Item.id == item_id).first()
-    
-    if not item:
-        return None
-    
-    # Update fields
-    update_data = item_data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(item, field, value)
-    
-    db.commit()
-    db.refresh(item)
-    return item
-
-
-def delete_item(db: Session, item_id: int) -> bool:
-    """Delete item by ID"""
-    item = db.query(Item).filter(Item.id == item_id).first()
-    
-    if not item:
-        return False
-    
-    db.delete(item)
-    db.commit()
-    return True
-'''
-
-        return template
-
-    def _get_mongodb_item_service(self) -> str:
-        """Get MongoDB item service"""
-        return '''"""
-Item Service (MongoDB)
-Business logic for item operations
-"""
-
-from typing import List, Optional
-from app.models.item import Item
-from app.schemas.item import ItemCreate, ItemUpdate
-
-
-async def create_item(item_data: ItemCreate) -> Item:
-    """Create a new item"""
-    item = Item(**item_data.model_dump())
-    await item.insert()
-    return item
-
-
-async def get_item(item_id: str) -> Optional[Item]:
-    """Get item by ID"""
-    return await Item.get(item_id)
-
-
-async def get_items(
-    skip: int = 0, 
-    limit: int = 100,
-    search: Optional[str] = None,
-    category: Optional[str] = None,
-    is_active: Optional[bool] = None
-) -> List[Item]:
-    """Get items with pagination and filters"""
-    query = Item.find()
-    
-    # Apply filters
-    if search:
-        query = query.find({{Item.title: {{"$regex": search, "$options": "i"}}}}})
-    if category:
-        query = query.find({{Item.category: category}})
-    if is_active is not None:
-        query = query.find({{Item.is_active: is_active}})
-    
-    # Apply pagination
-    return await query.skip(skip).limit(limit).to_list()
-
-
-async def update_item(item_id: str, item_data: ItemUpdate) -> Optional[Item]:
-    """Update item by ID"""
-    item = await Item.get(item_id)
-    
-    if not item:
-        return None
-    
-    # Update fields
-    update_data = item_data.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(item, field, value)
-    
-    await item.save()
-    return item
-
-
-async def delete_item(item_id: str) -> bool:
-    """Delete item by ID"""
-    item = await Item.get(item_id)
-    
-    if not item:
-        return False
-    
-    await item.delete()
-    return True
-'''
-
     def _get_ml_service_template(self) -> str:
         """Get ML service template"""
         return '''"""
@@ -294,48 +35,89 @@ ML Prediction Service
 Business logic for ML predictions
 """
 
-import asyncio
-import time
-from typing import Dict, Any
-from app.models.prediction import Prediction
+import logging
+from typing import Dict, Any, List
+import joblib
+import numpy as np
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+
+class PredictionService:
+    """Service for ML predictions"""
+    
+    def __init__(self):
+        self.model = None
+        self.load_model()
+    
+    def load_model(self):
+        """Load the ML model"""
+        try:
+            # Placeholder - replace with your actual model loading logic
+            logger.info("Loading ML model...")
+            # self.model = joblib.load("path/to/your/model.pkl")
+            logger.info("ML model loaded successfully")
+        except Exception as e:
+            logger.error(f"Failed to load ML model: {e}")
+            self.model = None
+    
+    async def make_prediction(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+        """Make prediction using the loaded model"""
+        if not self.model:
+            raise ValueError("Model not loaded")
+        
+        try:
+            # Placeholder prediction logic
+            # Replace with your actual prediction code
+            features = self._preprocess_input(input_data)
+            prediction = self._predict(features)
+            confidence = self._calculate_confidence(features)
+            
+            return {
+                "prediction": prediction,
+                "confidence": confidence,
+                "model_version": "1.0.0"
+            }
+        except Exception as e:
+            logger.error(f"Prediction failed: {e}")
+            raise ValueError(f"Prediction error: {str(e)}")
+    
+    def _preprocess_input(self, input_data: Dict[str, Any]) -> np.ndarray:
+        """Preprocess input data"""
+        # Placeholder preprocessing - implement your logic
+        # return processed_features
+        return np.array([1, 2, 3])  # Placeholder
+    
+    def _predict(self, features: np.ndarray) -> Any:
+        """Make prediction with the model"""
+        # Placeholder prediction - implement your logic
+        # return self.model.predict(features)
+        return "sample_prediction"  # Placeholder
+    
+    def _calculate_confidence(self, features: np.ndarray) -> float:
+        """Calculate prediction confidence"""
+        # Placeholder confidence calculation - implement your logic
+        return 0.95  # Placeholder
+
+
+# Service instance
+prediction_service = PredictionService()
 
 
 async def make_prediction(input_data: Dict[str, Any]) -> Dict[str, Any]:
     """Make ML prediction"""
-    start_time = time.time()
-    
-    # Placeholder for actual ML model inference
-    # Replace this with your actual ML model
-    prediction_result = {{
-        "prediction": "sample_result",
-        "probability": 0.85
-    }}
-    
-    processing_time = time.time() - start_time
-    
-    # Store prediction in database
-    prediction = Prediction(
-        input_data=input_data,
-        output_data=prediction_result,
-        model_version="1.0.0",
-        confidence_score=prediction_result.get("probability"),
-        processing_time=processing_time
-    )
-    
-    # Save prediction (implement based on your database choice)
-    # await prediction.save()
-    
-    return prediction_result
+    return await prediction_service.make_prediction(input_data)
 
 
-async def get_model_info() -> Dict[str, Any]:
+def get_model_info() -> Dict[str, Any]:
     """Get model information"""
-    return {{
+    return {
         "name": "DefaultModel",
         "version": "1.0.0",
-        "description": "Default ML model for predictions",
-        "status": "active"
-    }}
+        "description": "Machine Learning model for predictions",
+        "status": "loaded" if prediction_service.model else "not_loaded"
+    }
 '''
 
     def _get_processing_service_template(self) -> str:
@@ -345,33 +127,87 @@ Processing Service
 Business logic for data processing
 """
 
-import asyncio
-from typing import Dict, Any
+import logging
+from typing import Dict, Any, List
+from app.core.config import settings
+
+logger = logging.getLogger(__name__)
+
+
+class ProcessingService:
+    """Service for data processing"""
+    
+    def __init__(self):
+        self.processors = self._initialize_processors()
+    
+    def _initialize_processors(self) -> Dict[str, Any]:
+        """Initialize processing components"""
+        return {
+            "validator": self._create_validator(),
+            "transformer": self._create_transformer(),
+            "analyzer": self._create_analyzer()
+        }
+    
+    def _create_validator(self):
+        """Create data validator"""
+        # Implement your data validation logic
+        return lambda data: True  # Placeholder
+    
+    def _create_transformer(self):
+        """Create data transformer"""
+        # Implement your data transformation logic
+        return lambda data: data  # Placeholder
+    
+    def _create_analyzer(self):
+        """Create data analyzer"""
+        # Implement your data analysis logic
+        return lambda data: {"status": "analyzed"}  # Placeholder
+    
+    async def process_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
+        """Process input data"""
+        try:
+            # Step 1: Validate data
+            if not self.processors["validator"](data):
+                raise ValueError("Data validation failed")
+            
+            # Step 2: Transform data
+            transformed_data = self.processors["transformer"](data)
+            
+            # Step 3: Analyze data
+            analysis_result = self.processors["analyzer"](transformed_data)
+            
+            return {
+                "processed_data": transformed_data,
+                "analysis": analysis_result,
+                "status": "success",
+                "timestamp": self._get_timestamp()
+            }
+            
+        except Exception as e:
+            logger.error(f"Data processing failed: {e}")
+            raise ValueError(f"Processing error: {str(e)}")
+    
+    def _get_timestamp(self) -> str:
+        """Get current timestamp"""
+        from datetime import datetime
+        return datetime.utcnow().isoformat()
+
+
+# Service instance
+processing_service = ProcessingService()
 
 
 async def process_data(data: Dict[str, Any]) -> Dict[str, Any]:
-    """Process incoming data"""
-    # Placeholder for actual data processing
-    # Implement your business logic here
-    
-    processed_data = {{
-        "original": data,
-        "processed": True,
-        "timestamp": "2024-01-01T00:00:00Z",
-        "status": "completed"
-    }}
-    
-    return processed_data
+    """Process data using the processing service"""
+    return await processing_service.process_data(data)
 
 
-async def validate_data(data: Dict[str, Any]) -> bool:
-    """Validate incoming data"""
-    # Implement data validation logic
-    required_fields = ["id", "type"]
-    
-    for field in required_fields:
-        if field not in data:
-            return False
-    
-    return True
+def get_service_status() -> Dict[str, Any]:
+    """Get processing service status"""
+    return {
+        "service": "ProcessingService",
+        "status": "running",
+        "processors": list(processing_service.processors.keys()),
+        "version": "1.0.0"
+    }
 '''

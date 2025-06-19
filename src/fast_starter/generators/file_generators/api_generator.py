@@ -38,8 +38,6 @@ Main API Endpoints
 from fastapi import APIRouter, Depends, HTTPException, status
 {auth_imports}
 {database_imports}
-{model_imports}
-{schema_imports}
 
 router = APIRouter()
 
@@ -56,8 +54,6 @@ async def health_check():
     """Health check endpoint"""
     return {{"status": "healthy", "service": "{project_name}"}}
 
-{crud_endpoints}
-
 {project_specific_endpoints}
 '''
 
@@ -65,25 +61,17 @@ async def health_check():
         auth_imports = ""
         auth_endpoints_include = ""
         database_imports = ""
-        model_imports = ""
-        schema_imports = ""
-        crud_endpoints = ""
         project_specific_endpoints = ""
 
         if self.config.auth_type != AuthType.NONE:
             auth_imports = "from app.core.security import get_current_user"
-            # Don't include auth router here - it's included in __init__.py
-            auth_endpoints_include = ""  # Add database imports
+            auth_endpoints_include = ""
+
+        # Add database imports
         if self.config.is_async:
             database_imports = "from app.db.database import get_db\nfrom sqlalchemy.ext.asyncio import AsyncSession\nfrom app.models.auth import User"
         else:
             database_imports = "from app.db.database import get_db\nfrom sqlalchemy.orm import Session\nfrom app.models.auth import User"
-
-        # Add CRUD endpoints for different project types
-        if self.config.project_type in [ProjectType.CRUD, ProjectType.API]:
-            crud_endpoints = self._get_crud_endpoints()
-            model_imports = "from app.models.item import Item"
-            schema_imports = "from app.schemas.item import ItemCreate, ItemUpdate, Item"
 
         # Add project-specific endpoints
         if self.config.project_type == ProjectType.ML_API:
@@ -96,181 +84,8 @@ async def health_check():
             auth_imports=auth_imports,
             auth_endpoints_include=auth_endpoints_include,
             database_imports=database_imports,
-            model_imports=model_imports,
-            schema_imports=schema_imports,
-            crud_endpoints=crud_endpoints,
             project_specific_endpoints=project_specific_endpoints,
         )
-
-    def _get_crud_endpoints(self) -> str:
-        """Get CRUD endpoints template"""
-        if self.config.is_async:
-            return '''
-@router.post("/items/", response_model=Item, status_code=status.HTTP_201_CREATED)
-async def create_item(
-    item: ItemCreate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user) if {has_auth} else None
-):
-    """Create a new item"""
-    from app.services.item_service import create_item
-    return await create_item(db, item)
-
-
-@router.get("/items/", response_model=list[Item])
-async def read_items(
-    skip: int = 0,
-    limit: int = 100,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user) if {has_auth} else None
-):
-    """Get all items"""
-    from app.services.item_service import get_items
-    return await get_items(db, skip=skip, limit=limit)
-
-
-@router.get("/items/{{item_id}}", response_model=Item)
-async def read_item(
-    item_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user) if {has_auth} else None
-):
-    """Get item by ID"""
-    from app.services.item_service import get_item
-    item = await get_item(db, item_id)
-    if item is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return item
-
-
-@router.put("/items/{{item_id}}", response_model=Item)
-async def update_item(
-    item_id: int,
-    item: ItemUpdate,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user) if {has_auth} else None
-):
-    """Update item by ID"""
-    from app.services.item_service import update_item
-    updated_item = await update_item(db, item_id, item)
-    if updated_item is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return updated_item
-
-
-@router.delete("/items/{{item_id}}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_item(
-    item_id: int,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user) if {has_auth} else None
-):
-    """Delete item by ID"""
-    from app.services.item_service import delete_item
-    success = await delete_item(db, item_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Item not found")
-'''.format(
-                has_auth=self.config.auth_type != AuthType.NONE
-            )
-        else:
-            return '''
-@router.post("/items/", response_model=Item, status_code=status.HTTP_201_CREATED)
-def create_item(
-    item: ItemCreate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) if {has_auth} else None
-):
-    """Create a new item"""
-    from app.services.item_service import create_item
-    return create_item(db, item)
-
-
-@router.get("/items/", response_model=list[Item])
-def read_items(
-    skip: int = 0,
-    limit: int = 100,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) if {has_auth} else None
-):
-    """Get all items"""
-    from app.services.item_service import get_items
-    return get_items(db, skip=skip, limit=limit)
-
-
-@router.get("/items/{{item_id}}", response_model=Item)
-def read_item(
-    item_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) if {has_auth} else None
-):
-    """Get item by ID"""
-    from app.services.item_service import get_item
-    item = get_item(db, item_id)
-    if item is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return item
-
-
-@router.put("/items/{{item_id}}", response_model=Item)
-def update_item(
-    item_id: int,
-    item: ItemUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) if {has_auth} else None
-):
-    """Update item by ID"""
-    from app.services.item_service import update_item
-    updated_item = update_item(db, item_id, item)
-    if updated_item is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return updated_item
-    from app.services.item_service import get_items
-    return get_items(db, skip=skip, limit=limit)
-
-
-@router.get("/items/{{item_id}}", response_model=ItemResponse)
-def read_item(
-    item_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) if {has_auth} else None
-):
-    """Get item by ID"""
-    from app.services.item_service import get_item
-    item = get_item(db, item_id)
-    if item is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return item
-
-
-@router.put("/items/{{item_id}}", response_model=ItemResponse)
-def update_item(
-    item_id: int,
-    item: ItemUpdate,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) if {has_auth} else None
-):
-    """Update item by ID"""
-    from app.services.item_service import update_item
-    updated_item = update_item(db, item_id, item)
-    if updated_item is None:
-        raise HTTPException(status_code=404, detail="Item not found")
-    return updated_item
-
-
-@router.delete("/items/{{item_id}}", status_code=status.HTTP_204_NO_CONTENT)
-def delete_item(
-    item_id: int,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user) if {has_auth} else None
-):
-    """Delete item by ID"""
-    from app.services.item_service import delete_item
-    success = delete_item(db, item_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Item not found")
-'''.format(
-                has_auth=self.config.auth_type != AuthType.NONE
-            )
 
     def _get_ml_endpoints(self) -> str:
         """Get ML API specific endpoints"""
