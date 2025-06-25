@@ -199,15 +199,15 @@ async def login_for_access_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect email or password",
-            headers={{"WWW-Authenticate": "Bearer"}},
+            headers={"WWW-Authenticate": "Bearer"},
         )
     
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={{"sub": user.email}}, expires_delta=access_token_expires
+        data={"sub": user.email}, expires_delta=access_token_expires
     )
-    
-    return {{"access_token": access_token, "token_type": "bearer"}}
+
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
@@ -295,13 +295,13 @@ async def login_for_access_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
-            headers={{"WWW-Authenticate": "Bearer"}},
+            headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={{"sub": user.email}}, expires_delta=access_token_expires
+        data={"sub": user.email}, expires_delta=access_token_expires
     )
-    return {{"access_token": access_token, "token_type": "bearer"}}
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
@@ -376,13 +376,13 @@ async def login_for_access_token(
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect username or password",
-            headers={{"WWW-Authenticate": "Bearer"}},
+            headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={{"sub": user.email}}, expires_delta=access_token_expires
+        data={"sub": user.email}, expires_delta=access_token_expires
     )
-    return {{"access_token": access_token, "token_type": "bearer"}}
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
@@ -424,7 +424,7 @@ async def update_user_me(
 
     def _get_oauth2_simple_endpoints(self) -> str:
         """Get simple OAuth2 endpoints without database"""
-        return '''"""
+        return f'''"""
 OAuth2 Authentication Endpoints (Simple)
 """
 
@@ -448,20 +448,20 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
     if not user:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={{"WWW-Authenticate": "Bearer"}},
+            detail="Incorrect email or password",
+            headers={"WWW-Authenticate": "Bearer"},
         )
     access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     access_token = create_access_token(
-        data={{"sub": user["username"]}}, expires_delta=access_token_expires
+        data={"sub": user["username"]}, expires_delta=access_token_expires
     )
-    return {{"access_token": access_token, "token_type": "bearer"}}
+    return {"access_token": access_token, "token_type": "bearer"}
 
 
 @router.get("/me")
 async def read_users_me(current_user: dict = Depends(get_current_active_user)):
     """Get current user information"""
-    return {{"username": current_user["username"], "email": current_user["email"]}}
+    return {"username": current_user["username"], "email": current_user["email"]}
 
 
 @router.post("/logout")
@@ -469,7 +469,7 @@ async def logout():
     """Logout endpoint"""
     # OAuth2 logout logic would be implemented here
     # This depends on your OAuth2 provider (Google, GitHub, Auth0, etc.)
-    return {{"message": "Logout successful"}}
+    return {"message": "Logout successful"}
 '''
 
     def _get_api_key_auth_endpoints(self) -> str:
