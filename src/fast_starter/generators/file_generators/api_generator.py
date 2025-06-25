@@ -96,8 +96,7 @@ async def health_check():
         return '''
 @router.post("/predict")
 async def predict(
-    input_data: dict,
-    current_user: User = Depends(get_current_user) if {has_auth} else None
+    input_data: dict
 ):
     """Make ML prediction"""
     from app.services.prediction_service import make_prediction
@@ -110,7 +109,6 @@ async def predict(
 
 @router.get("/model/info")
 async def get_model_info(
-    current_user: User = Depends(get_current_user) if {has_auth} else None
 ):
     """Get ML model information"""
     return {{
