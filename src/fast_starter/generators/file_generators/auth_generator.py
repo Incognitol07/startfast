@@ -281,7 +281,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
-    to_encode.update({{"exp": expire}})
+    to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
@@ -336,7 +336,7 @@ async def get_current_user(
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={{"WWW-Authenticate": "Bearer"}},
+        headers={"WWW-Authenticate": "Bearer"},
     )
     
     token_data = verify_token(token)
@@ -401,7 +401,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
-    to_encode.update({{"exp": expire}})
+    to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
@@ -454,7 +454,7 @@ def get_current_user(
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={{"WWW-Authenticate": "Bearer"}},
+        headers={"WWW-Authenticate": "Bearer"},
     )
     
     token_data = verify_token(token)
@@ -493,14 +493,14 @@ from app.core.config import settings
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_PREFIX}/auth/token")
 
 # In-memory user store (replace with your preferred storage)
-fake_users_db = {{
-    "testuser": {{
+fake_users_db = {
+    "testuser": {
         "username": "testuser",
         "email": "test@example.com",
         "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",  # password: secret
         "disabled": False,
-    }}
-}}
+    }
+}
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -525,7 +525,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     else:
         expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     
-    to_encode.update({{"exp": expire}})
+    to_encode.update({"exp": expire})
     encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
@@ -561,7 +561,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={{"WWW-Authenticate": "Bearer"}},
+        headers={"WWW-Authenticate": "Bearer"},
     )
     
     username = verify_token(token)
@@ -639,7 +639,7 @@ class User(BaseModel):
     last_login = Column(DateTime, nullable=True)
     
     def __repr__(self):
-        return f"<User {{self.email}}>"
+        return f"<User {self.email}>"
 '''
 
         return template
