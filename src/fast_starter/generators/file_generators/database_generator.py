@@ -89,7 +89,7 @@ async def init_db():
     
     async with engine.begin() as conn:
         # Import all models to ensure they are registered with Base
-        import app.models.auth  # noqa: F401
+        import app.models.auth 
         
         # Create all tables
         await conn.run_sync(Base.metadata.create_all)
@@ -142,7 +142,7 @@ def init_db():
     from app.db.base import Base
     
     # Import all models to ensure they are registered with Base
-    import app.models.auth  # noqa: F401
+    import app.models.auth 
     
     # Create all tables
     Base.metadata.create_all(bind=engine)
