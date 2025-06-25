@@ -227,31 +227,359 @@ def get_current_user(
 
     def _get_oauth2_template(self) -> str:
         """Get OAuth2 authentication template"""
+        if self.should_generate_sqlalchemy_files():
+            # OAuth2 with database backend
+            if self.config.is_async:
+                return self._get_oauth2_with_db_async_template()
+            else:
+                return self._get_oauth2_with_db_sync_template()
+        else:
+            # OAuth2 without database (simple in-memory or external provider)
+            return self._get_oauth2_simple_template()
+
+    def _get_oauth2_with_db_async_template(self) -> str:
+        """Get OAuth2 template with async database support"""
         template = '''"""
-OAuth2 Authentication Security
+OAuth2 Authentication Security with Database
 """
 
+from datetime import datetime, timedelta
+from typing import Optional
+from jose import JWTError, jwt
+from passlib.context import CryptContext
 from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from app.core.config import settings
+from app.db.database import get_db
+from app.models.auth import User
+from app.schemas.auth import TokenData
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{{settings.API_PREFIX}}/auth/token")
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# OAuth2 scheme with token URL
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_PREFIX}/auth/token")
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    """Get current user from OAuth2 token"""
-    # Implement OAuth2 token validation logic here
-    # This is a placeholder implementation
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against its hash"""
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password: str) -> str:
+    """Generate password hash"""
+    return pwd_context.hash(password)
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """Create JWT access token"""
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    to_encode.update({{"exp": expire}})
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+
+def verify_token(token: str) -> Optional[TokenData]:
+    """Verify and decode JWT token"""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+        return TokenData(user_id=user_id)
+    except JWTError:
+        return None
+
+
+async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
+    """Get user by email"""
+    result = await db.execute(select(User).filter(User.email == email))
+    return result.scalars().first()
+
+
+async def get_user_by_username(db: AsyncSession, username: str) -> Optional[User]:
+    """Get user by username"""
+    result = await db.execute(select(User).filter(User.email == username))
+    return result.scalars().first()
+
+
+async def create_user(db: AsyncSession, email: str, password: str) -> User:
+    """Create new user"""
+    hashed_password = get_password_hash(password)
+    user = User(email=email, hashed_password=hashed_password)
+    db.add(user)
+    await db.commit()
+    await db.refresh(user)
+    return user
+
+
+async def authenticate_user(db: AsyncSession, username: str, password: str) -> Optional[User]:
+    """Authenticate user with username/email and password"""
+    user = await get_user_by_username(db, username)
+    if not user or not verify_password(password, user.hashed_password):
+        return None
+    return user
+
+
+async def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: AsyncSession = Depends(get_db)
+) -> User:
+    """Get current authenticated user from OAuth2 token"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
+        headers={{"WWW-Authenticate": "Bearer"}},
     )
     
-    # Add your OAuth2 provider integration here
-    # For example: Google, GitHub, Auth0, etc.
+    token_data = verify_token(token)
+    if token_data is None:
+        raise credentials_exception
     
-    raise credentials_exception
+    user = await get_user_by_username(db, username=token_data.username)
+    if user is None:
+        raise credentials_exception
+    
+    return user
+
+
+async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
+    """Get current active user"""
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+'''
+        return template
+
+    def _get_oauth2_with_db_sync_template(self) -> str:
+        """Get OAuth2 template with sync database support"""
+        template = '''"""
+OAuth2 Authentication Security with Database
+"""
+
+from datetime import datetime, timedelta
+from typing import Optional
+from jose import JWTError, jwt
+from passlib.context import CryptContext
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+from app.core.config import settings
+from app.db.database import get_db
+from app.models.auth import User
+from app.schemas.auth import TokenData
+
+# Password hashing
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+# OAuth2 scheme with token URL
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_PREFIX}/auth/token")
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against its hash"""
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password: str) -> str:
+    """Generate password hash"""
+    return pwd_context.hash(password)
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """Create JWT access token"""
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    to_encode.update({{"exp": expire}})
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+
+def verify_token(token: str) -> Optional[TokenData]:
+    """Verify and decode JWT token"""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id: str = payload.get("sub")
+        if user_id is None:
+            return None
+        return TokenData(user_id=user_id)
+    except JWTError:
+        return None
+
+
+def get_user_by_email(db: Session, email: str) -> Optional[User]:
+    """Get user by email"""
+    return db.query(User).filter(User.email == email).first()
+
+
+def get_user_by_username(db: Session, username: str) -> Optional[User]:
+    """Get user by username"""
+    return db.query(User).filter(User.email == username).first()
+
+
+def create_user(db: Session, email: str, password: str) -> User:
+    """Create new user"""
+    hashed_password = get_password_hash(password)
+    user = User(email=email, hashed_password=hashed_password)
+    db.add(user)
+    db.commit()
+    db.refresh(user)
+    return user
+
+
+def authenticate_user(db: Session, username: str, password: str) -> Optional[User]:
+    """Authenticate user with username/email and password"""
+    user = get_user_by_username(db, username)
+    if not user or not verify_password(password, user.hashed_password):
+        return None
+    return user
+
+
+def get_current_user(
+    token: str = Depends(oauth2_scheme),
+    db: Session = Depends(get_db)
+) -> User:
+    """Get current authenticated user from OAuth2 token"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={{"WWW-Authenticate": "Bearer"}},
+    )
+    
+    token_data = verify_token(token)
+    if token_data is None:
+        raise credentials_exception
+    
+    user = get_user_by_username(db, username=token_data.username)
+    if user is None:
+        raise credentials_exception
+    
+    return user
+
+
+def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
+    """Get current active user"""
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+'''
+        return template
+
+    def _get_oauth2_simple_template(self) -> str:
+        """Get simple OAuth2 template without database"""
+        template = '''"""
+OAuth2 Authentication Security (Simple)
+"""
+
+from datetime import datetime, timedelta
+from typing import Optional, Dict, Any
+from jose import JWTError, jwt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
+from app.core.config import settings
+
+# OAuth2 scheme with token URL
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_PREFIX}/auth/token")
+
+# In-memory user store (replace with your preferred storage)
+fake_users_db = {{
+    "testuser": {{
+        "username": "testuser",
+        "email": "test@example.com",
+        "hashed_password": "$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW",  # password: secret
+        "disabled": False,
+    }}
+}}
+
+
+def verify_password(plain_password: str, hashed_password: str) -> bool:
+    """Verify a password against its hash"""
+    from passlib.context import CryptContext
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    return pwd_context.verify(plain_password, hashed_password)
+
+
+def get_password_hash(password: str) -> str:
+    """Generate password hash"""
+    from passlib.context import CryptContext
+    pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    return pwd_context.hash(password)
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """Create JWT access token"""
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    to_encode.update({{"exp": expire}})
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+
+def verify_token(token: str) -> Optional[str]:
+    """Verify and decode JWT token"""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        username: str = payload.get("sub")
+        return username
+    except JWTError:
+        return None
+
+
+def get_user(username: str) -> Optional[Dict[str, Any]]:
+    """Get user from fake database"""
+    if username in fake_users_db:
+        user_dict = fake_users_db[username]
+        return user_dict
+    return None
+
+
+def authenticate_user(username: str, password: str) -> Optional[Dict[str, Any]]:
+    """Authenticate user with username and password"""
+    user = get_user(username)
+    if not user or not verify_password(password, user["hashed_password"]):
+        return None
+    return user
+
+
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> Dict[str, Any]:
+    """Get current authenticated user from OAuth2 token"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={{"WWW-Authenticate": "Bearer"}},
+    )
+    
+    username = verify_token(token)
+    if username is None:
+        raise credentials_exception
+    
+    user = get_user(username=username)
+    if user is None:
+        raise credentials_exception
+    
+    return user
+
+
+async def get_current_active_user(current_user: Dict[str, Any] = Depends(get_current_user)) -> Dict[str, Any]:
+    """Get current active user"""
+    if current_user.get("disabled"):
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
 '''
 
         return template
@@ -301,7 +629,7 @@ class User(BaseModel):
     """User model"""
     
     __tablename__ = "users"
-    
+    id = Column(Integer, primary_key=True, index=True)
     email = Column(String(255), unique=True, index=True, nullable=False)
     hashed_password = Column(String(255), nullable=False)
     is_active = Column(Boolean, default=True)
@@ -334,7 +662,7 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     """Token data schema"""
-    email: Optional[str] = None
+    username: Optional[str] = None
 
 
 class UserBase(BaseModel):

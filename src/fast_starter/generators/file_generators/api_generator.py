@@ -67,11 +67,15 @@ async def health_check():
             auth_imports = "from app.core.security import get_current_user"
             auth_endpoints_include = ""
 
-        # Add database imports
-        if self.config.is_async:
-            database_imports = "from app.db.database import get_db\nfrom sqlalchemy.ext.asyncio import AsyncSession\nfrom app.models.auth import User"
-        else:
-            database_imports = "from app.db.database import get_db\nfrom sqlalchemy.orm import Session\nfrom app.models.auth import User"
+        # Add database imports only for JWT/SQL setups
+        if (
+            self.config.auth_type == AuthType.JWT
+            and self.should_generate_sqlalchemy_files()
+        ):
+            if self.config.is_async:
+                database_imports = "from app.db.database import get_db\nfrom sqlalchemy.ext.asyncio import AsyncSession\nfrom app.models.auth import User"
+            else:
+                database_imports = "from app.db.database import get_db\nfrom sqlalchemy.orm import Session\nfrom app.models.auth import User"
 
         # Add project-specific endpoints
         if self.config.project_type == ProjectType.ML_API:
@@ -150,6 +154,16 @@ async def process_data(
 
     def _get_auth_endpoints_template(self) -> str:
         """Get authentication endpoints template"""
+        if self.config.auth_type == AuthType.OAUTH2:
+            return self._get_oauth2_auth_endpoints()
+        elif self.config.auth_type == AuthType.JWT:
+            return self._get_jwt_auth_endpoints()
+        elif self.config.auth_type == AuthType.API_KEY:
+            return self._get_api_key_auth_endpoints()
+        return ""
+
+    def _get_jwt_auth_endpoints(self) -> str:
+        """Get JWT authentication endpoints"""
         if self.config.is_async:
             session_import = "from sqlalchemy.ext.asyncio import AsyncSession"
             session_type = "AsyncSession"
@@ -159,8 +173,8 @@ async def process_data(
             session_type = "Session"
             await_keyword = ""
 
-        template = f'''"""
-Authentication Endpoints
+        return f'''"""
+JWT Authentication Endpoints
 """
 
 from datetime import timedelta
@@ -234,7 +248,247 @@ async def update_user_me(
     return current_user
 '''
 
-        return template
+    def _get_oauth2_auth_endpoints(self) -> str:
+        """Get OAuth2 authentication endpoints"""
+        if self.should_generate_sqlalchemy_files():
+            # OAuth2 with database backend
+            if self.config.is_async:
+                return self._get_oauth2_with_db_async_endpoints()
+            else:
+                return self._get_oauth2_with_db_sync_endpoints()
+        else:
+            # OAuth2 without database (simple implementation)
+            return self._get_oauth2_simple_endpoints()
+
+    def _get_oauth2_with_db_async_endpoints(self) -> str:
+        """Get OAuth2 endpoints with async database support"""
+        return '''"""
+OAuth2 Authentication Endpoints with Database
+"""
+
+from datetime import timedelta
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.core.config import settings
+from app.db.database import get_db
+from app.schemas.auth import Token, UserCreate, User as UserSchema
+from app.core.security import (
+    authenticate_user, 
+    create_access_token, 
+    get_current_active_user,
+    get_user_by_email,
+    create_user
+)
+
+router = APIRouter()
+
+
+@router.post("/token", response_model=Token)
+async def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: AsyncSession = Depends(get_db)
+):
+    """OAuth2 compatible token login, get an access token for future requests"""
+    user = await authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={{"WWW-Authenticate": "Bearer"}},
+        )
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={{"sub": user.email}}, expires_delta=access_token_expires
+    )
+    return {{"access_token": access_token, "token_type": "bearer"}}
+
+
+@router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
+async def register_user(
+    user_data: UserCreate,
+    db: AsyncSession = Depends(get_db)
+):
+    """Register new user"""
+    # Check if user already exists
+    existing_user = await get_user_by_email(db, user_data.email)
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create new user
+    user = await create_user(db, user_data.email, user_data.password)
+    return user
+
+
+@router.get("/me", response_model=UserSchema)
+async def read_users_me(current_user: UserSchema = Depends(get_current_active_user)):
+    """Get current user information"""
+    return current_user
+
+
+@router.put("/me", response_model=UserSchema)
+async def update_user_me(
+    user_update: dict,
+    current_user: UserSchema = Depends(get_current_active_user),
+    db: AsyncSession = Depends(get_db)
+):    
+    """Update current user information"""
+    # Implementation for updating user profile
+    # This is a placeholder - implement based on your needs
+    return current_user
+'''
+
+    def _get_oauth2_with_db_sync_endpoints(self) -> str:
+        """Get OAuth2 endpoints with sync database support"""
+        return '''"""
+OAuth2 Authentication Endpoints with Database
+"""
+
+from datetime import timedelta
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
+from app.core.config import settings
+from app.db.database import get_db
+from app.schemas.auth import Token, UserCreate, User as UserSchema
+from app.core.security import (
+    authenticate_user, 
+    create_access_token, 
+    get_current_active_user,
+    get_user_by_email,
+    create_user
+)
+
+router = APIRouter()
+
+
+@router.post("/token", response_model=Token)
+async def login_for_access_token(
+    form_data: OAuth2PasswordRequestForm = Depends(),
+    db: Session = Depends(get_db)
+):
+    """OAuth2 compatible token login, get an access token for future requests"""
+    user = authenticate_user(db, form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={{"WWW-Authenticate": "Bearer"}},
+        )
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={{"sub": user.email}}, expires_delta=access_token_expires
+    )
+    return {{"access_token": access_token, "token_type": "bearer"}}
+
+
+@router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
+async def register_user(
+    user_data: UserCreate,
+    db: Session = Depends(get_db)
+):
+    """Register new user"""
+    # Check if user already exists
+    existing_user = get_user_by_email(db, user_data.email)
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Email already registered"
+        )
+    
+    # Create new user
+    user = create_user(db, user_data.email, user_data.password)
+    return user
+
+
+@router.get("/me", response_model=UserSchema)
+async def read_users_me(current_user: UserSchema = Depends(get_current_active_user)):
+    """Get current user information"""
+    return current_user
+
+
+@router.put("/me", response_model=UserSchema)
+async def update_user_me(
+    user_update: dict,
+    current_user: UserSchema = Depends(get_current_active_user),
+    db: Session = Depends(get_db)
+):    
+    """Update current user information"""
+    # Implementation for updating user profile
+    # This is a placeholder - implement based on your needs
+    return current_user
+'''
+
+    def _get_oauth2_simple_endpoints(self) -> str:
+        """Get simple OAuth2 endpoints without database"""
+        return '''"""
+OAuth2 Authentication Endpoints (Simple)
+"""
+
+from datetime import timedelta
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
+from app.core.config import settings
+from app.core.security import (
+    authenticate_user, 
+    create_access_token, 
+    get_current_active_user
+)
+
+router = APIRouter()
+
+
+@router.post("/token")
+async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
+    """OAuth2 compatible token login, get an access token for future requests"""
+    user = authenticate_user(form_data.username, form_data.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect username or password",
+            headers={{"WWW-Authenticate": "Bearer"}},
+        )
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={{"sub": user["username"]}}, expires_delta=access_token_expires
+    )
+    return {{"access_token": access_token, "token_type": "bearer"}}
+
+
+@router.get("/me")
+async def read_users_me(current_user: dict = Depends(get_current_active_user)):
+    """Get current user information"""
+    return {{"username": current_user["username"], "email": current_user["email"]}}
+
+
+@router.post("/logout")
+async def logout():
+    """Logout endpoint"""
+    # OAuth2 logout logic would be implemented here
+    # This depends on your OAuth2 provider (Google, GitHub, Auth0, etc.)
+    return {{"message": "Logout successful"}}
+'''
+
+    def _get_api_key_auth_endpoints(self) -> str:
+        """Get API Key authentication endpoints"""
+        return '''"""
+API Key Authentication Endpoints
+"""
+
+from fastapi import APIRouter, Depends
+from app.core.security import get_api_key
+
+router = APIRouter()
+
+
+@router.get("/verify")
+async def verify_api_key(api_key: str = Depends(get_api_key)):
+    """Verify API key"""
+    return {"message": "API key is valid", "api_key": api_key[:8] + "***"}
+'''
 
     def _get_init_template(self) -> str:
         """Get __init__.py template that exports the router"""
