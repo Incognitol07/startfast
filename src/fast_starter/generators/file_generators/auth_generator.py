@@ -279,22 +279,32 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     if expires_delta:
         expire = datetime.utcnow() + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    
+        expire = datetime.utcnow() + timedelta(
+            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
+        )
+
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    encoded_jwt = jwt.encode(
+        to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM
+    )
     return encoded_jwt
 
 
 def verify_token(token: str) -> Optional[TokenData]:
     """Verify and decode JWT token"""
     try:
-        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: int = payload.get("sub")
+        payload = jwt.decode(
+            token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM]
+        )
+        user_id: str = payload.get("sub")
         if user_id is None:
             return None
-        return TokenData(user_id=user_id)
-    except JWTError:
+        return TokenData(user_id=int(user_id))
+    except JWTError as e:
+        print(f"JWT Error: {e}")  # Debugging line
+        return None
+    except Exception as e:
+        print(f"Unexpected error in verify_token: {e}")  # Debugging line
         return None
 
 
@@ -304,9 +314,9 @@ async def get_user_by_email(db: AsyncSession, email: str) -> Optional[User]:
     return result.scalars().first()
 
 
-async def get_user_by_username(db: AsyncSession, username: str) -> Optional[User]:
-    """Get user by username"""
-    result = await db.execute(select(User).filter(User.email == username))
+async def get_user_by_user_id(db: AsyncSession, user_id: int) -> Optional[User]:
+    """Get user by user ID"""
+    result = await db.execute(select(User).filter(User.id == user_id))
     return result.scalars().first()
 
 
@@ -320,17 +330,18 @@ async def create_user(db: AsyncSession, email: str, password: str) -> User:
     return user
 
 
-async def authenticate_user(db: AsyncSession, username: str, password: str) -> Optional[User]:
-    """Authenticate user with username/email and password"""
-    user = await get_user_by_username(db, username)
+async def authenticate_user(
+    db: AsyncSession, email: str, password: str
+) -> Optional[User]:
+    """Authenticate user with user ID and password"""
+    user = await get_user_by_email(db, email)
     if not user or not verify_password(password, user.hashed_password):
         return None
     return user
 
 
 async def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: AsyncSession = Depends(get_db)
+    token: str = Depends(oauth2_scheme), db: AsyncSession = Depends(get_db)
 ) -> User:
     """Get current authenticated user from OAuth2 token"""
     credentials_exception = HTTPException(
@@ -338,23 +349,26 @@ async def get_current_user(
         detail="Could not validate credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
-    
+
     token_data = verify_token(token)
     if token_data is None:
         raise credentials_exception
-    
-    user = await get_user_by_username(db, username=token_data.username)
+
+    user = await get_user_by_user_id(db, user_id=token_data.user_id)
     if user is None:
         raise credentials_exception
-    
+
     return user
 
 
-async def get_current_active_user(current_user: User = Depends(get_current_user)) -> User:
+async def get_current_active_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
     """Get current active user"""
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     return current_user
+
 '''
         return template
 
@@ -410,10 +424,10 @@ def verify_token(token: str) -> Optional[TokenData]:
     """Verify and decode JWT token"""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: int = payload.get("sub")
+        user_id: str = payload.get("sub")
         if user_id is None:
             return None
-        return TokenData(user_id=user_id)
+        return TokenData(user_id=int(user_id))
     except JWTError:
         return None
 
