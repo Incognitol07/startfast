@@ -157,7 +157,7 @@ async def get_current_user(
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={{"WWW-Authenticate": "Bearer"}},
+        headers={"WWW-Authenticate": "Bearer"},
     )
     
     token_data = verify_token(credentials.credentials)
@@ -205,7 +205,7 @@ def get_current_user(
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={{"WWW-Authenticate": "Bearer"}},
+        headers={"WWW-Authenticate": "Bearer"},
     )
     
     token_data = verify_token(credentials.credentials)
@@ -245,7 +245,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate credentials",
-        headers={{"WWW-Authenticate": "Bearer"}},
+        headers={"WWW-Authenticate": "Bearer"},
     )
     
     # Add your OAuth2 provider integration here
