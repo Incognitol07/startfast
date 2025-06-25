@@ -290,7 +290,7 @@ def verify_token(token: str) -> Optional[TokenData]:
     """Verify and decode JWT token"""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: str = payload.get("sub")
+        user_id: int = payload.get("sub")
         if user_id is None:
             return None
         return TokenData(user_id=user_id)
@@ -410,7 +410,7 @@ def verify_token(token: str) -> Optional[TokenData]:
     """Verify and decode JWT token"""
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: str = payload.get("sub")
+        user_id: int = payload.get("sub")
         if user_id is None:
             return None
         return TokenData(user_id=user_id)
