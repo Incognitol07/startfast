@@ -16,7 +16,7 @@ A comprehensive FastAPI project generator that creates scalable, modular FastAPI
 
 ## Installation
 
-### From PyPI (Coming Soon)
+### From PyPI
 
 ```bash
 pip install fast-starter
