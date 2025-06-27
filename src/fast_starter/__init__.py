@@ -6,7 +6,7 @@ with various configurations including different databases, authentication
 methods, and project structures.
 """
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 __author__ = "FastStarter Team"
 __email__ = "ab.adelodun@gmail.com"
 
