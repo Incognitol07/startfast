@@ -51,7 +51,6 @@ dev = [
 [project.urls]
 Homepage = "https://github.com/Incognitol07/faststarter"
 Repository = "https://github.com/Incognitol07/faststarter"
-Documentation = "https://faststarter.readthedocs.io"
 Issues = "https://github.com/Incognitol07/faststarter/issues"
 
 [project.scripts]
