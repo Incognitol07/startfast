@@ -31,6 +31,7 @@ class RequirementsGenerator(BaseGenerator):
             "pydantic>=2.5.0",
             "pydantic-settings>=2.1.0",
             "python-multipart>=0.0.6",
+            "email-validator>=1.1.3",
         ]
 
         if self.config.is_async:
