@@ -54,7 +54,6 @@ Documentation = "https://faststarter.readthedocs.io"
 Issues = "https://github.com/Incognitol07/faststarter/issues"
 
 [project.scripts]
-faststarter= "fast_starter.cli:main"
 faststarter = "fast_starter.cli:main"
 
 [tool.setuptools.packages.find]
