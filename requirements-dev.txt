@@ -7,6 +7,7 @@ pytest
 pytest-cov
 pytest-asyncio
 pre-commit
+colorama  # For cross-platform colored terminal output
 
 # Package development
 build

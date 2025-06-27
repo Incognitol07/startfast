@@ -79,7 +79,7 @@ def example_task(self, seconds: int = 10):
         # Update task progress
         current_task.update_state(
             state="PROGRESS",
-            meta={{current": i + 1, "total": seconds, "status": f"Processing step {{i + 1}}..."}}
+            meta={{"current": i + 1, "total": seconds, "status": f"Processing step {{i + 1}}..."}}
         )
         time.sleep(1)
     
