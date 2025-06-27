@@ -59,9 +59,6 @@ faststarter = "fast_starter.cli:main"
 [tool.setuptools.packages.find]
 where = ["src"]
 
-[tool.setuptools.package-data]
-"fast_starter.templates" = ["**/*"]
-
 [tool.black]
 line-length = 88
 target-version = ['py38']
