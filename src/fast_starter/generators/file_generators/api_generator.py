@@ -65,17 +65,22 @@ async def health_check():
 
         if self.config.auth_type != AuthType.NONE:
             auth_imports = "from app.core.security import get_current_user"
-            auth_endpoints_include = ""
-
-        # Add database imports only for JWT/SQL setups
-        if (
-            self.config.auth_type == AuthType.JWT
-            and self.should_generate_sqlalchemy_files()
-        ):
-            if self.config.is_async:
-                database_imports = "from app.db.database import get_db\nfrom sqlalchemy.ext.asyncio import AsyncSession\nfrom app.models.auth import User"
-            else:
-                database_imports = "from app.db.database import get_db\nfrom sqlalchemy.orm import Session\nfrom app.models.auth import User"
+            auth_endpoints_include = (
+                ""  # Add database imports based on database type and auth type
+            )
+        if self.config.auth_type == AuthType.JWT:
+            if self.should_generate_sqlalchemy_files():
+                # SQL database imports
+                if self.config.is_async:
+                    database_imports = "from app.db.database import get_db\nfrom sqlalchemy.ext.asyncio import AsyncSession\nfrom app.models.auth import User"
+                else:
+                    database_imports = "from app.db.database import get_db\nfrom sqlalchemy.orm import Session\nfrom app.models.auth import User"
+            elif self.config.database_type.value == "redis":
+                # Redis imports
+                database_imports = "from app.schemas.auth import User"
+            elif self.config.database_type.value == "mongodb":
+                # MongoDB imports
+                database_imports = "from app.schemas.auth import User"
 
         # Add project-specific endpoints
         if self.config.project_type == ProjectType.ML_API:
@@ -162,6 +167,10 @@ async def process_data(
 
     def _get_jwt_auth_endpoints(self) -> str:
         """Get JWT authentication endpoints"""
+        if self.config.database_type.value == "redis":
+            return self._get_jwt_redis_auth_endpoints()
+
+        # Original SQL-based JWT auth endpoints
         if self.config.is_async:
             session_import = "from sqlalchemy.ext.asyncio import AsyncSession"
             session_type = "AsyncSession"
@@ -239,12 +248,94 @@ async def update_user_me(
     user_update: dict,
     current_user: UserSchema = Depends(get_current_user),
     db: {session_type} = Depends(get_db)
-):    
-    """Update current user information"""
+):      """Update current user information"""
     # Implementation for updating user profile
     # This is a placeholder - implement based on your needs
     return current_user
 '''
+
+    def _get_jwt_redis_auth_endpoints(self) -> str:
+        """Get JWT authentication endpoints for Redis"""
+        if self.config.is_async:
+            await_keyword = "await "
+            async_keyword = "async "
+        else:
+            await_keyword = ""
+            async_keyword = ""
+
+        template = f'''"""
+JWT Authentication Endpoints with Redis
+"""
+
+from datetime import timedelta
+from fastapi import APIRouter, Depends, HTTPException, status
+from app.core.config import settings
+from app.schemas.auth import Token, UserLogin, UserCreate, User as UserSchema
+from app.core.security import authenticate_user, create_access_token, get_current_user
+
+router = APIRouter()
+
+
+@router.post("/token", response_model=Token)
+{async_keyword}def login_for_access_token(user_credentials: UserLogin):
+    """Login endpoint to get access token"""
+    user = {await_keyword}authenticate_user(user_credentials.email, user_credentials.password)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect email or password",
+            headers={{"WWW-Authenticate": "Bearer"}},
+        )
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    access_token = create_access_token(
+        data={{"sub": user.email}}, expires_delta=access_token_expires
+    )
+    return {{"access_token": access_token, "token_type": "bearer"}}
+
+
+@router.post("/register", response_model=UserSchema)
+{async_keyword}def register_user(user_data: UserCreate):
+    """Register new user"""
+    # TODO: Implement your Redis user registration logic here
+    # Use the Redis service for data storage:
+    # from app.services.redis_service import redis_service
+    # 
+    # Example implementation:
+    # 1. Check if user already exists: {await_keyword}redis_service.exists(f"user:{{user_data.email}}")
+    # 2. Hash the password: hashed_password = hash_password(user_data.password)
+    # 3. Store user data: {await_keyword}redis_service.hset(f"user:{{user_data.email}}", "profile", user_data.dict())
+    # 4. Return the created user
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="User registration not implemented. Please implement your Redis user logic."
+    )
+
+
+@router.get("/me", response_model=UserSchema)
+{async_keyword}def read_users_me(current_user: UserSchema = Depends(get_current_user)):
+    """Get current user information"""
+    return current_user
+
+
+@router.put("/me", response_model=UserSchema)
+{async_keyword}def update_user_me(
+    user_update: dict,
+    current_user: UserSchema = Depends(get_current_user)
+):    
+    """Update current user information"""
+    # TODO: Implement your Redis user update logic here
+    # Use the Redis service for data operations:
+    # from app.services.redis_service import redis_service
+    # 
+    # Example implementation:
+    # 1. Update user data: {await_keyword}redis_service.hset(f"user:{{current_user.email}}", "profile", updated_data)
+    # 2. Return the updated user object
+    raise HTTPException(
+        status_code=status.HTTP_501_NOT_IMPLEMENTED,
+        detail="User update not implemented. Please implement your Redis user logic."
+    )
+'''
+        return template
 
     def _get_oauth2_auth_endpoints(self) -> str:
         """Get OAuth2 authentication endpoints"""

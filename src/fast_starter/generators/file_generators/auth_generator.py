@@ -35,7 +35,7 @@ class AuthGenerator(BaseGenerator):
                 f"{self.config.path}/app/schemas/auth.py", auth_schemas_content
             )
         elif self.config.auth_type in [AuthType.JWT, AuthType.OAUTH2]:
-            # For NoSQL databases, generate simplified auth schemas
+            # For NoSQL databases (MongoDB/Redis), generate simplified auth schemas
             auth_schemas_content = self._get_nosql_auth_schemas_template()
             self.write_file(
                 f"{self.config.path}/app/schemas/auth.py", auth_schemas_content
@@ -53,6 +53,11 @@ class AuthGenerator(BaseGenerator):
 
     def _get_jwt_template(self) -> str:
         """Get JWT authentication template"""
+        # Use Redis-specific template if Redis is the database
+        if self.config.database_type.value == "redis":
+            return self._get_jwt_redis_template()
+
+        # Original SQL-based JWT template
         template = '''"""
 JWT Authentication Security
 """
@@ -772,4 +777,202 @@ class UserLogin(BaseModel):
     email: EmailStr
     password: str
 '''
+        return template
+
+    def _get_jwt_redis_template(self) -> str:
+        """Get JWT authentication template for Redis"""
+        if self.config.is_async:
+            template = '''"""
+JWT Authentication Security with Redis
+"""
+
+from datetime import datetime, timedelta
+from typing import Optional
+from jose import JWTError, jwt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.core.config import settings
+from app.schemas.auth import TokenData, User
+
+# JWT token scheme
+security = HTTPBearer()
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """Create JWT access token"""
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+
+def verify_token(token: str) -> Optional[TokenData]:
+    """Verify and decode JWT token"""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+        return TokenData(username=email)
+    except JWTError:
+        return None
+
+
+# TODO: Implement your Redis-based user authentication logic here
+# Use the generic Redis service from app.services.redis_service for data storage
+from app.services.redis_service import redis_service
+
+async def authenticate_user(email: str, password: str) -> Optional[User]:
+    """
+    Authenticate user with email and password
+    
+    TODO: Implement your Redis user authentication logic:
+    1. Use redis_service.hget() to retrieve user data by email key
+    2. Verify password hash using bcrypt or similar
+    3. Return User object or None
+    
+    Example implementation:
+    user_data = await redis_service.hget(f"user:{email}", "profile")
+    if user_data and verify_password(password, user_data["password_hash"]):
+        return User(**user_data)
+    return None
+    """
+    # Placeholder implementation - replace with actual Redis logic
+    return None
+
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> User:
+    """Get current authenticated user"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    token_data = verify_token(credentials.credentials)
+    if token_data is None:
+        raise credentials_exception
+      # TODO: Implement your Redis user retrieval logic here
+    # Use the Redis service to get user data:
+    # user_data = await redis_service.hget(f"user:{token_data.username}", "profile")
+    # if user_data is None:
+    #     raise credentials_exception
+    # return User(**user_data)
+    
+    # Placeholder - replace with actual implementation
+    raise credentials_exception
+
+
+async def get_current_active_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Get current active user"""
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+'''
+        else:
+            template = '''"""
+JWT Authentication Security with Redis
+"""
+
+from datetime import datetime, timedelta
+from typing import Optional
+from jose import JWTError, jwt
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from app.core.config import settings
+from app.schemas.auth import TokenData, User
+
+# JWT token scheme
+security = HTTPBearer()
+
+
+def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+    """Create JWT access token"""
+    to_encode = data.copy()
+    if expires_delta:
+        expire = datetime.utcnow() + expires_delta
+    else:
+        expire = datetime.utcnow() + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    
+    to_encode.update({"exp": expire})
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
+    return encoded_jwt
+
+
+def verify_token(token: str) -> Optional[TokenData]:
+    """Verify and decode JWT token"""
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        email: str = payload.get("sub")
+        if email is None:
+            return None
+        return TokenData(username=email)
+    except JWTError:
+        return None
+
+
+# TODO: Implement your Redis-based user authentication logic here
+# Use the generic Redis service from app.services.redis_service for data storage
+# Note: This is the sync version - use async version if your app supports it
+from app.services.redis_service import redis_service
+
+def authenticate_user(email: str, password: str) -> Optional[User]:
+    """
+    Authenticate user with email and password (sync version)
+    
+    TODO: Implement your Redis user authentication logic:
+    1. Use redis_service.hget() to retrieve user data by email key
+    2. Verify password hash using bcrypt or similar
+    3. Return User object or None
+    
+    Note: For sync usage, you may need to run async operations in an event loop
+    or use a synchronous Redis client.
+    """
+    # Placeholder implementation - replace with actual Redis logic
+    return None
+
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security)
+) -> User:
+    """Get current authenticated user"""
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Could not validate credentials",
+        headers={"WWW-Authenticate": "Bearer"},
+    )
+    
+    token_data = verify_token(credentials.credentials)
+    if token_data is None:
+        raise credentials_exception
+      # TODO: Implement your Redis user retrieval logic here (sync version)
+    # Use the Redis service to get user data:
+    # user_data = redis_service.hget(f"user:{token_data.username}", "profile")
+    # if user_data is None:
+    #     raise credentials_exception
+    # return User(**user_data)
+    # Note: For sync usage, you may need async handling or sync Redis client
+    
+    # Placeholder - replace with actual implementation
+    raise credentials_exception
+
+
+def get_current_active_user(
+    current_user: User = Depends(get_current_user),
+) -> User:
+    """Get current active user"""
+    if not current_user.is_active:
+        raise HTTPException(status_code=400, detail="Inactive user")
+    return current_user
+'''
+
         return template

@@ -170,18 +170,21 @@ def create_project_config(args) -> ProjectConfig:
     )
 
 
+# Print the FastStarter banner
 def print_banner():
     """Print the FastStarter banner"""
-    banner = f"""
-{Fore.CYAN}{Style.BRIGHT}
-╔═══════════════════════════════════════════════════════════════════╗
-║                         ⚡ Fast Starter                          ║
-║               Generate scalable FastAPI projects                  ║
-╚═══════════════════════════════════════════════════════════════════╝
+    width = 65
+    title = '⚡ Fast Starter'
+    subtitle = 'Generate scalable FastAPI projects'
+
+    banner = f"""{Fore.CYAN}{Style.BRIGHT}
+╔{'═' * width}╗
+║ {'⚡ Fast Starter'.center(width - 2)}║
+║{subtitle.center(width)}║
+╚{'═' * width}╝
 {Style.RESET_ALL}
 """
     print(banner)
-
 
 def print_colored(text: str, color: str = Fore.WHITE, style: str = "") -> None:
     """Print colored text with optional styling"""
