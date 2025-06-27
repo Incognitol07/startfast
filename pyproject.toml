@@ -3,14 +3,14 @@ requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "faststarter"
+name = "startfast"
 version = "0.1.0"
 description = "A comprehensive FastAPI project generator"
 readme = "README.md"
 requires-python = ">=3.8"
 license = "MIT"
 authors = [
-    {name = "FastStarter Team", email = "ab.adelodun@gmail.com"},
+    {name = "StartFast Team", email = "ab.adelodun@gmail.com"},
 ]
 keywords = ["fastapi", "generator", "template", "project", "scaffolding"]
 classifiers = [
@@ -48,12 +48,12 @@ dev = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/Incognitol07/faststarter"
-Repository = "https://github.com/Incognitol07/faststarter"
-Issues = "https://github.com/Incognitol07/faststarter/issues"
+Homepage = "https://github.com/Incognitol07/startfast"
+Repository = "https://github.com/Incognitol07/startfast"
+Issues = "https://github.com/Incognitol07/startfast/issues"
 
 [project.scripts]
-faststarter = "fast_starter.cli:main"
+startfast = "startfast.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
@@ -75,4 +75,4 @@ disallow_untyped_defs = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "--cov=fast_starter --cov-report=term-missing"
+addopts = "--cov=startfast --cov-report=term-missing"

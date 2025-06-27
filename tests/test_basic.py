@@ -5,13 +5,13 @@ import tempfile
 import shutil
 from pathlib import Path
 
-from src.fast_starter.core.config import (
+from src.startfast.core.config import (
     ProjectConfig,
     ProjectType,
     DatabaseType,
     AuthType,
 )
-from src.fast_starter.generators.project_generator import ProjectGenerator
+from src.startfast.generators.project_generator import ProjectGenerator
 
 
 class TestProjectConfig:

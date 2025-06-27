@@ -1,5 +1,5 @@
 """
-Configuration classes and enums for FastStarter project generator
+Configuration classes and enums for StartFast project generator
 """
 
 import logging

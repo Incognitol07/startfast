@@ -1,5 +1,5 @@
 """
-CLI module for Fast Starter
+CLI module for StartFast
 Command line interface for generating FastAPI projects
 """
 
@@ -40,7 +40,7 @@ logger = logging.getLogger(__name__)
 def create_argument_parser() -> argparse.ArgumentParser:
     """Create and configure argument parser"""
     parser = argparse.ArgumentParser(
-        description="Fast Starter - Generate scalable FastAPI projects",
+        description="StartFast - Generate scalable FastAPI projects",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
@@ -170,21 +170,22 @@ def create_project_config(args) -> ProjectConfig:
     )
 
 
-# Print the FastStarter banner
+# Print the StartFast banner
 def print_banner():
-    """Print the FastStarter banner"""
+    """Print the StartFast banner"""
     width = 65
-    title = '⚡ Fast Starter'
-    subtitle = 'Generate scalable FastAPI projects'
+    title = "⚡ StartFast"
+    subtitle = "Generate scalable FastAPI projects"
 
     banner = f"""{Fore.CYAN}{Style.BRIGHT}
 ╔{'═' * width}╗
-║ {'⚡ Fast Starter'.center(width - 2)}║
+║ {'⚡ StartFast'.center(width - 2)}║
 ║{subtitle.center(width)}║
 ╚{'═' * width}╝
 {Style.RESET_ALL}
 """
     print(banner)
+
 
 def print_colored(text: str, color: str = Fore.WHITE, style: str = "") -> None:
     """Print colored text with optional styling"""

@@ -1,1 +1,1 @@
-"""Tests for Fast Starter package"""
+"""Tests for StartFast package"""
