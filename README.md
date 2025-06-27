@@ -70,13 +70,13 @@ pip install -e .
 ### ⚡ Generate Your First Project
 
 ```bash
-faststartermy-awesome-api
+faststarter my-awesome-api
 ```
 
 ### 🎨 Custom Configuration
 
 ```bash
-faststartermy-api --type crud --database postgresql --auth jwt --advanced
+faststarter my-api --type crud --database postgresql --auth jwt --advanced
 ```
 
 ---
@@ -86,7 +86,7 @@ faststartermy-api --type crud --database postgresql --auth jwt --advanced
 ### 📋 Command Syntax
 
 ```bash
-faststarterPROJECT_NAME [OPTIONS]
+faststarter PROJECT_NAME [OPTIONS]
 ```
 
 ### ⚙️ Configuration Options
@@ -113,7 +113,7 @@ faststarterPROJECT_NAME [OPTIONS]
 <summary><strong>🔧 Simple API with SQLite</strong></summary>
 
 ```bash
-faststartersimple-api
+faststarter simple-api
 ```
 </details>
 
@@ -121,7 +121,7 @@ faststartersimple-api
 <summary><strong>🗄️ CRUD API with PostgreSQL and JWT</strong></summary>
 
 ```bash
-faststartercrud-api --type crud --database postgresql --auth jwt
+faststarter crud-api --type crud --database postgresql --auth jwt
 ```
 </details>
 
@@ -129,7 +129,7 @@ faststartercrud-api --type crud --database postgresql --auth jwt
 <summary><strong>🤖 ML API with Advanced Features</strong></summary>
 
 ```bash
-faststarterml-service --type ml-api --advanced --monitoring
+faststarter ml-service --type ml-api --advanced --monitoring
 ```
 </details>
 
@@ -137,7 +137,7 @@ faststarterml-service --type ml-api --advanced --monitoring
 <summary><strong>🏗️ Microservice with MongoDB and Celery</strong></summary>
 
 ```bash
-faststartermicro-service --type microservice --database mongodb --celery
+faststarter micro-service --type microservice --database mongodb --celery
 ```
 </details>
 
