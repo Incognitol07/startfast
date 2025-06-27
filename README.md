@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 Fast Starter
+# ⚡ Fast Starter
 
 ### *The Ultimate FastAPI Project Generator*
 
