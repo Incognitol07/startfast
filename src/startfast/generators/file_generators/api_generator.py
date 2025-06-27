@@ -248,7 +248,8 @@ async def update_user_me(
     user_update: dict,
     current_user: UserSchema = Depends(get_current_user),
     db: {session_type} = Depends(get_db)
-):      """Update current user information"""
+):      
+    """Update current user information"""
     # Implementation for updating user profile
     # This is a placeholder - implement based on your needs
     return current_user
