@@ -6,7 +6,7 @@
 
 *Create scalable, production-ready FastAPI projects in seconds*
 
-[![PyPI version](https://badge.fury.io/py/fast-starter.svg)](https://badge.fury.io/py/fast-starter)
+[![PyPI version](https://badge.fury.io/py/faststarter.svg)](https://badge.fury.io/py/faststarter)
 [![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -52,14 +52,14 @@
 ### 🎯 Quick Install
 
 ```bash
-pip install fast-starter
+pip install faststarter
 ```
 
 ### 🛠️ Development Install
 
 ```bash
-git clone https://github.com/Incognitol07/fast-starter.git
-cd fast-starter
+git clone https://github.com/Incognitol07/faststarter.git
+cd faststarter
 pip install -e .
 ```
 
@@ -70,13 +70,13 @@ pip install -e .
 ### ⚡ Generate Your First Project
 
 ```bash
-fast-starter my-awesome-api
+faststartermy-awesome-api
 ```
 
 ### 🎨 Custom Configuration
 
 ```bash
-fast-starter my-api --type crud --database postgresql --auth jwt --advanced
+faststartermy-api --type crud --database postgresql --auth jwt --advanced
 ```
 
 ---
@@ -86,7 +86,7 @@ fast-starter my-api --type crud --database postgresql --auth jwt --advanced
 ### 📋 Command Syntax
 
 ```bash
-fast-starter PROJECT_NAME [OPTIONS]
+faststarterPROJECT_NAME [OPTIONS]
 ```
 
 ### ⚙️ Configuration Options
@@ -113,7 +113,7 @@ fast-starter PROJECT_NAME [OPTIONS]
 <summary><strong>🔧 Simple API with SQLite</strong></summary>
 
 ```bash
-fast-starter simple-api
+faststartersimple-api
 ```
 </details>
 
@@ -121,7 +121,7 @@ fast-starter simple-api
 <summary><strong>🗄️ CRUD API with PostgreSQL and JWT</strong></summary>
 
 ```bash
-fast-starter crud-api --type crud --database postgresql --auth jwt
+faststartercrud-api --type crud --database postgresql --auth jwt
 ```
 </details>
 
@@ -129,7 +129,7 @@ fast-starter crud-api --type crud --database postgresql --auth jwt
 <summary><strong>🤖 ML API with Advanced Features</strong></summary>
 
 ```bash
-fast-starter ml-service --type ml-api --advanced --monitoring
+faststarterml-service --type ml-api --advanced --monitoring
 ```
 </details>
 
@@ -137,7 +137,7 @@ fast-starter ml-service --type ml-api --advanced --monitoring
 <summary><strong>🏗️ Microservice with MongoDB and Celery</strong></summary>
 
 ```bash
-fast-starter micro-service --type microservice --database mongodb --celery
+faststartermicro-service --type microservice --database mongodb --celery
 ```
 </details>
 
@@ -177,8 +177,8 @@ Generated projects follow a **clean, scalable structure**:
 
 ```bash
 # Clone the repository
-git clone https://github.com/Incognitol07/fast-starter.git
-cd fast-starter
+git clone https://github.com/Incognitol07/faststarter.git
+cd faststarter
 
 # Install in development mode
 pip install -e ".[dev]"
@@ -264,14 +264,14 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 ### � Get Help & Connect
 
 [![Email](https://img.shields.io/badge/Email-ab.adelodun%40gmail.com-blue?style=for-the-badge&logo=gmail)](mailto:ab.adelodun@gmail.com)
-[![GitHub Issues](https://img.shields.io/badge/Issues-Report%20Bug-red?style=for-the-badge&logo=github)](https://github.com/Incognitol07/fast-starter/issues)
-[![GitHub Discussions](https://img.shields.io/badge/Discussions-Join%20Community-green?style=for-the-badge&logo=github)](https://github.com/Incognitol07/fast-starter/discussions)
+[![GitHub Issues](https://img.shields.io/badge/Issues-Report%20Bug-red?style=for-the-badge&logo=github)](https://github.com/Incognitol07/faststarter/issues)
+[![GitHub Discussions](https://img.shields.io/badge/Discussions-Join%20Community-green?style=for-the-badge&logo=github)](https://github.com/Incognitol07/faststarter/discussions)
 
 ### 🌟 Show Your Support
 
 If Fast Starter helped you build amazing projects, consider giving it a ⭐!
 
-[![Star on GitHub](https://img.shields.io/github/stars/Incognitol07/fast-starter?style=social)](https://github.com/Incognitol07/fast-starter)
+[![Star on GitHub](https://img.shields.io/github/stars/Incognitol07/faststarter?style=social)](https://github.com/Incognitol07/faststarter)
 
 </div>
 
