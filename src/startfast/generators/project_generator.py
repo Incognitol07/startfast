@@ -32,9 +32,7 @@ class ProjectGenerator(BaseGenerator):
         from .file_generators.database_generator import DatabaseGenerator
         from .file_generators.auth_generator import AuthGenerator
         from .file_generators.api_generator import APIGenerator
-        from .file_generators.models_generator import ModelsGenerator
         from .file_generators.schemas_generator import SchemasGenerator
-        from .file_generators.services_generator import ServicesGenerator
         from .file_generators.utils_generator import UtilsGenerator
         from .file_generators.docker_generator import DockerGenerator
         from .file_generators.tests_generator import TestsGenerator
@@ -48,9 +46,7 @@ class ProjectGenerator(BaseGenerator):
             "database": DatabaseGenerator(self.config),
             "auth": AuthGenerator(self.config),
             "api": APIGenerator(self.config),
-            "models": ModelsGenerator(self.config),
             "schemas": SchemasGenerator(self.config),
-            "services": ServicesGenerator(self.config),
             "utils": UtilsGenerator(self.config),
             "docker": DockerGenerator(self.config),
             "tests": TestsGenerator(self.config),
@@ -143,7 +139,6 @@ class ProjectGenerator(BaseGenerator):
             "auth_type": self.config.auth_type.value,
             "generators_used": list(self.generators.keys()),
             "features": {
-                "advanced": self.config.is_advanced,
                 "docker": self.config.include_docker,
                 "tests": self.config.include_tests,
                 "docs": self.config.include_docs,

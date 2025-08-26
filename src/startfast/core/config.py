@@ -45,7 +45,6 @@ class ProjectConfig:
     project_type: ProjectType
     database_type: DatabaseType
     auth_type: AuthType
-    is_advanced: bool = False
     include_docker: bool = True
     include_tests: bool = True
     include_docs: bool = True

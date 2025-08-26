@@ -46,7 +46,6 @@ class BaseGenerator(ABC):
                 word.capitalize()
                 for word in self.config.name.replace("-", "_").split("_")
             ),
-            "is_advanced": self.config.is_advanced,
             "database_type": self.config.database_type.value,
             "auth_type": self.config.auth_type.value,
             "python_version": self.config.python_version,

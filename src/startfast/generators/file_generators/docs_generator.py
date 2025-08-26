@@ -136,8 +136,6 @@ This project is licensed under the MIT License.
 
 All API v1 endpoints are prefixed with `/api/v1`.
 
-{self._get_endpoint_docs()}
-
 ## Error Responses
 
 All endpoints return error responses in the following format:
@@ -173,9 +171,6 @@ All endpoints return error responses in the following format:
             features.append("- Monitoring and observability")
         if self.config.include_celery:
             features.append("- Background task processing with Celery")
-        if self.config.is_advanced:
-            features.append("- Advanced features and configurations")
-
         return "\n".join(features)
 
     def _get_auth_docs(self) -> str:
@@ -204,18 +199,3 @@ X-API-Key: <your-api-key>
 Follow the OAuth2 flow to obtain an access token."""
 
         return ""
-
-    def _get_endpoint_docs(self) -> str:
-        """Get endpoint documentation based on project type"""
-        from ...core.config import ProjectType
-
-        if self.config.project_type == ProjectType.CRUD:
-            return """#### Items
-
-- **GET** `/api/v1/items/` - List all items
-- **POST** `/api/v1/items/` - Create new item
-- **GET** `/api/v1/items/{id}` - Get item by ID
-- **PUT** `/api/v1/items/{id}` - Update item
-- **DELETE** `/api/v1/items/{id}` - Delete item"""
-
-        return "Add your endpoint documentation here."

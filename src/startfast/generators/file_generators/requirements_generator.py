@@ -52,13 +52,15 @@ class RequirementsGenerator(BaseGenerator):
                 [
                     "sqlalchemy>=2.0.23",
                     "aiosqlite>=0.19.0",
+                    "alembic>=1.13.1"
                 ]
             )
         elif self.config.database_type == DatabaseType.POSTGRESQL:
             requirements.extend(
                 [
                     "sqlalchemy>=2.0.23",
-                    "asyncpg>=0.29.0"
+                    "asyncpg>=0.29.0",
+                    "alembic>=1.13.1"
                 ]
             )
         elif self.config.database_type == DatabaseType.MYSQL:
@@ -66,6 +68,7 @@ class RequirementsGenerator(BaseGenerator):
                 [
                     "sqlalchemy>=2.0.23",
                     "aiomysql>=0.2.0",
+                    "alembic>=1.13.1"
                 ]
             )
         elif self.config.database_type == DatabaseType.MONGODB:
@@ -123,14 +126,6 @@ class RequirementsGenerator(BaseGenerator):
                 [
                     "celery>=5.3.4",
                     "redis>=5.0.1",
-                ]
-            )
-
-        if self.config.is_advanced:
-            requirements.extend(
-                [
-                    "alembic>=1.13.1",  # Database migrations
-                    "python-dotenv>=1.0.0",  # Environment variables
                 ]
             )
 
