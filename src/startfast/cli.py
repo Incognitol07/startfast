@@ -242,7 +242,7 @@ Examples:
         for i, (ptype, name_type, desc) in enumerate(type_options, 1):
             console.print(f"  {i}. [bright_white]{name_type}[/] [muted]- {desc}[/]")
         
-        type_choice = IntPrompt.ask("", default=2, choices=["1", "2", "3", "4"])
+        type_choice = IntPrompt.ask("", default=2, choices=["1", "2", "3"])
         project_type = type_options[type_choice - 1][0]
         
         # Database
