@@ -19,7 +19,7 @@
 <table>
   <tr>
     <td>🚀 <strong>Project Types</strong></td>
-    <td>API • CRUD • ML-API • Microservice</td>
+    <td>API • CRUD • ML-API</td>
   </tr>
   <tr>
     <td>💾 <strong>Databases</strong></td>
@@ -94,7 +94,7 @@ startfast PROJECT_NAME [OPTIONS]
 | Option | Description | Values |
 |--------|-------------|--------|
 | `--path` | Project directory | Directory path |
-| `--type` | Project architecture | `api`, `crud`, `ml-api`, `microservice` |
+| `--type` | Project architecture | `api`, `crud`, `ml-api` |
 | `--database` | Database backend | `sqlite`, `postgresql`, `mysql`, `mongodb`, `redis` |
 | `--auth` | Authentication method | `none`, `jwt`, `oauth2`, `api-key` |
 | `--sync` | Synchronous implementation | Flag |
@@ -115,6 +115,7 @@ startfast PROJECT_NAME [OPTIONS]
 ```bash
 startfast simple-api
 ```
+
 </details>
 
 <details>
@@ -123,6 +124,7 @@ startfast simple-api
 ```bash
 startfast crud-api --type crud --database postgresql --auth jwt
 ```
+
 </details>
 
 <details>
@@ -131,17 +133,8 @@ startfast crud-api --type crud --database postgresql --auth jwt
 ```bash
 startfast ml-service --type ml-api --advanced --monitoring
 ```
+
 </details>
-
-<details>
-<summary><strong>🏗️ Microservice with MongoDB and Celery</strong></summary>
-
-```bash
-startfast micro-service --type microservice --database mongodb --celery
-```
-</details>
-
----
 
 ## 🏗️ Project Architecture
 
@@ -214,17 +207,23 @@ We welcome contributions! Here's how to get started:
 
 1. **🍴 Fork** the repository
 2. **🌿 Create** your feature branch
+
    ```bash
    git checkout -b feature/amazing-feature
    ```
+
 3. **💾 Commit** your changes
+
    ```bash
    git commit -m 'Add some amazing feature'
    ```
+
 4. **📤 Push** to the branch
+
    ```bash
    git push origin feature/amazing-feature
    ```
+
 5. **🔀 Open** a Pull Request
 
 ### 📝 Contribution Guidelines

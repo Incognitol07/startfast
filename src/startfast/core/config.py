@@ -17,7 +17,6 @@ class ProjectType(Enum):
     API = "api"
     CRUD = "crud"
     ML_API = "ml-api"
-    MICROSERVICE = "microservice"
 
 
 class DatabaseType(Enum):

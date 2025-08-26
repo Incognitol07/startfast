@@ -82,8 +82,6 @@ Examples:
                           help="ML-ready setup (models, inference, data processing)")
         parser.add_argument("--minimal", action="store_true",
                           help="Minimal setup (no Docker, tests, or extras)")
-        parser.add_argument("--microservice", action="store_true",
-                          help="Microservice setup (service discovery, config management)")
         
         # Power user options
         parser.add_argument("--sync", action="store_true", help="Synchronous instead of async")
@@ -238,8 +236,7 @@ Examples:
         type_options = [
             (ProjectType.API, "Simple API", "Basic endpoints, CRUD operations"),
             (ProjectType.CRUD, "Full backend", "User management, complex data models, production-ready"),
-            (ProjectType.ML_API, "ML service", "Model serving, data processing, inference endpoints"),
-            (ProjectType.MICROSERVICE, "Microservice", "Service mesh ready, config management, observability")
+            (ProjectType.ML_API, "ML service", "Model serving, data processing, inference endpoints")
         ]
         
         for i, (ptype, name_type, desc) in enumerate(type_options, 1):
@@ -313,8 +310,6 @@ Examples:
         # Determine project type
         if args.ml:
             project_type = ProjectType.ML_API
-        elif args.microservice:
-            project_type = ProjectType.MICROSERVICE
         elif args.minimal:
             project_type = ProjectType.API
         else:

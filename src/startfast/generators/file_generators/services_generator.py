@@ -20,14 +20,6 @@ class ServicesGenerator(BaseGenerator):
                 ml_service_content,
             )
 
-        # Generate processing service for microservices
-        if self.config.project_type == ProjectType.MICROSERVICE:
-            processing_service_content = self._get_processing_service_template()
-            self.write_file(
-                f"{self.config.path}/app/services/processing_service.py",
-                processing_service_content,
-            )
-
         # Generate Redis service when Redis is selected as database
         if self.config.database_type == DatabaseType.REDIS:
             redis_service_content = self._get_redis_service_template()

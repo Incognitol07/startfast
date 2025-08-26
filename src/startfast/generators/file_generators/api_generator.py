@@ -85,8 +85,6 @@ async def health_check():
         # Add project-specific endpoints
         if self.config.project_type == ProjectType.ML_API:
             project_specific_endpoints = self._get_ml_endpoints()
-        elif self.config.project_type == ProjectType.MICROSERVICE:
-            project_specific_endpoints = self._get_microservice_endpoints()
 
         return template.format(
             project_name=self.get_template_vars()["project_name"],
@@ -123,36 +121,6 @@ async def get_model_info(
     }}
 '''.format(
             has_auth=self.config.auth_type != AuthType.NONE
-        )
-
-    def _get_microservice_endpoints(self) -> str:
-        """Get microservice specific endpoints"""
-        return '''
-@router.get("/status")
-async def service_status():
-    """Get service status"""
-    return {{
-        "service": "{project_name}",
-        "status": "running",
-        "version": "1.0.0"
-    }}
-
-
-@router.post("/process")
-async def process_data(
-    data: dict,
-    current_user: User = Depends(get_current_user) if {has_auth} else None
-):
-    """Process data"""
-    from app.services.processing_service import process_data
-    try:
-        result = await process_data(data)
-        return {{"result": result, "status": "processed"}}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-'''.format(
-            project_name=self.config.name,
-            has_auth=self.config.auth_type != AuthType.NONE,
         )
 
     def _get_auth_endpoints_template(self) -> str:
