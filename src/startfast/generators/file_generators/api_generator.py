@@ -79,45 +79,12 @@ async def health_check():
                 # MongoDB imports
                 database_imports = "from app.schemas.auth import User"
 
-        # Add project-specific endpoints
-        if self.config.project_type == ProjectType.ML_API:
-            project_specific_endpoints = self._get_ml_endpoints()
-
         return template.format(
             project_name=self.get_template_vars()["project_name"],
             auth_imports=auth_imports,
             auth_endpoints_include=auth_endpoints_include,
             database_imports=database_imports,
             project_specific_endpoints=project_specific_endpoints,
-        )
-
-    def _get_ml_endpoints(self) -> str:
-        """Get ML API specific endpoints"""
-        return '''
-@router.post("/predict")
-async def predict(
-    input_data: dict
-):
-    """Make ML prediction"""
-    from app.services.prediction_service import make_prediction
-    try:
-        result = await make_prediction(input_data)
-        return {{"prediction": result, "status": "success"}}
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-
-@router.get("/model/info")
-async def get_model_info(
-):
-    """Get ML model information"""
-    return {{
-        "model_name": "DefaultModel",
-        "version": "1.0.0",
-        "description": "Machine Learning model for predictions"
-    }}
-'''.format(
-            has_auth=self.config.auth_type != AuthType.NONE
         )
 
     def _get_auth_endpoints_template(self) -> str:

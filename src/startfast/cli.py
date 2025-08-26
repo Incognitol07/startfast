@@ -58,7 +58,6 @@ Examples:
   startfast my-api                          # Production-ready project, PostgreSQL + JWT
   startfast my-api --db sqlite              # Development setup  
   startfast my-api --db mongo --auth oauth # Custom stack
-  startfast my-api --ml                     # ML-ready API with model serving
   startfast --interactive                   # Full customization mode
             """
         )
@@ -77,9 +76,6 @@ Examples:
                           default="jwt", 
                           help="Auth method (default: jwt)")
         
-        # Feature flags for common needs
-        parser.add_argument("--ml", action="store_true", 
-                          help="ML-ready setup (models, inference, data processing)")
         parser.add_argument("--minimal", action="store_true",
                           help="Minimal setup (no Docker, tests, or extras)")
         
@@ -235,8 +231,7 @@ Examples:
         console.print("\n[primary]What are you building?[/]")
         type_options = [
             (ProjectType.API, "Simple API", "Basic endpoints, CRUD operations"),
-            (ProjectType.CRUD, "Full backend", "User management, complex data models, production-ready"),
-            (ProjectType.ML_API, "ML service", "Model serving, data processing, inference endpoints")
+            (ProjectType.CRUD, "Full backend", "User management, complex data models, production-ready")
         ]
         
         for i, (ptype, name_type, desc) in enumerate(type_options, 1):
@@ -307,10 +302,7 @@ Examples:
         auth_mapping = {"jwt": AuthType.JWT, "oauth2": AuthType.OAUTH2, 
                        "api-key": AuthType.API_KEY, "none": AuthType.NONE}
         
-        # Determine project type
-        if args.ml:
-            project_type = ProjectType.ML_API
-        elif args.minimal:
+        if args.minimal:
             project_type = ProjectType.API
         else:
             project_type = ProjectType.CRUD

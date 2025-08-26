@@ -65,9 +65,6 @@ That's it. Your API is live at `http://localhost:8000/docs`
 # SQLite for quick prototyping
 startfast my-app --db sqlite
 
-# ML-ready setup
-startfast my-ml-api --ml
-
 ```
 
 ---
@@ -113,9 +110,6 @@ startfast my-api
 
 # Quick prototype (SQLite + minimal features)
 startfast my-app --minimal
-
-# ML service with model serving
-startfast my-ml-api --ml
 
 ```
 
