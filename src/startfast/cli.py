@@ -1,731 +1,427 @@
 """
-CLI module for StartFast with Rich UI
-Command line interface for generating FastAPI projects with beautiful, interactive UI
+StartFast CLI - Instant professional FastAPI projects
+The Django-admin startproject for FastAPI developers who value their time
 """
 
 import argparse
 import os
 import sys
-import logging
-from typing import Optional, Dict, Any, List, Tuple
+import time
+from typing import Optional, Dict, Any, List
 from pathlib import Path
 
-# Rich imports for beautiful CLI
 from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 from rich.prompt import Prompt, Confirm, IntPrompt
-from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
+from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn
 from rich.text import Text
 from rich.align import Align
 from rich.columns import Columns
+from rich.live import Live
 from rich import box
-import time
+from rich.padding import Padding
+from rich.rule import Rule
+from rich.theme import Theme
 
 from .core.config import ProjectConfig, ProjectType, DatabaseType, AuthType
 from .generators.project_generator import ProjectGenerator
 
-# Initialize Rich console
-console = Console()
-# Configure logging with Rich
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(message)s",
-    datefmt="[%X]",
-    handlers=[logging.StreamHandler(console.file)]
-)
-logger = logging.getLogger("startfast")
+# Console with developer-friendly theme
+from rich.theme import Theme
 
+console = Console(
+    theme=Theme({
+        "primary": "bright_cyan",
+        "success": "bright_green", 
+        "warning": "yellow",
+        "error": "red",
+        "muted": "dim white",
+        "accent": "magenta"
+    }),
+    highlight=False  # Don't auto-highlight, we'll be intentional
+)
 
 class StartFastCLI:
-    """Rich-powered CLI for StartFast"""
+    """Professional FastAPI project generator for developers"""
     
     def __init__(self):
         self.console = console
         
     def create_argument_parser(self) -> argparse.ArgumentParser:
-        """Create and configure argument parser"""
+        """Argument parser optimized for developer workflow"""
         parser = argparse.ArgumentParser(
-            description="StartFast - Generate scalable FastAPI projects",
-            formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+            description="StartFast - Instant professional FastAPI projects",
+            formatter_class=argparse.RawDescriptionHelpFormatter,
+            epilog="""
+Examples:
+  startfast my-api                          # Production-ready project, PostgreSQL + JWT
+  startfast my-api --db sqlite              # Development setup  
+  startfast my-api --db mongo --auth oauth # Custom stack
+  startfast my-api --ml                     # ML-ready API with model serving
+  startfast --interactive                   # Full customization mode
+            """
         )
 
-        # Required arguments
-        parser.add_argument("name", nargs='?', help="Project name (optional in interactive mode)")
-
-        parser.add_argument(
-            "--path", default=".", help="Directory where project will be created"
-        )
-
-        # Project type
-        parser.add_argument(
-            "--type",
-            choices=[t.value for t in ProjectType],
-            default=ProjectType.API.value,
-            help="Type of FastAPI project to generate",
-        )
-
-        # Database options
-        parser.add_argument(
-            "--database",
-            choices=[db.value for db in DatabaseType],
-            default=DatabaseType.SQLITE.value,
-            help="Database type",
-        )
-
-        # Authentication
-        parser.add_argument(
-            "--auth",
-            choices=[auth.value for auth in AuthType],
-            default=AuthType.JWT.value,
-            help="Authentication method",
-        )
-
-        # Configuration flags
-        parser.add_argument(
-            "--sync",
-            action="store_true",
-            help="Generate synchronous version (default is async)",
-        )
-
-        parser.add_argument(
-            "--advanced",
-            action="store_true",
-            help="Include advanced features and configurations",
-        )
-
-        parser.add_argument(
-            "--no-docker", action="store_true", help="Skip Docker configuration"
-        )
-
-        parser.add_argument("--no-tests", action="store_true", help="Skip test setup")
-
-        parser.add_argument(
-            "--no-docs", action="store_true", help="Skip documentation setup"
-        )
-
-        parser.add_argument(
-            "--monitoring",
-            action="store_true",
-            help="Include monitoring and observability tools",
-        )
-
-        parser.add_argument(
-            "--celery", action="store_true", help="Include Celery for background tasks"
-        )
-
-        parser.add_argument(
-            "--python-version", default="3.11", help="Python version for the project"
-        )
-
-        parser.add_argument(
-            "-f",
-            "--force",
-            action="store_true",
-            help="Overwrite existing directory without confirmation",
-        )
-
-        parser.add_argument(
-            "-v",
-            "--verbose",
-            action="store_true",
-            help="Enable verbose logging",
-        )
-
-        parser.add_argument(
-            "--no-interactive",
-            action="store_true",
-            help="Disable interactive mode (interactive is default)",
-        )
-
+        parser.add_argument("name", nargs='?', help="Project name")
+        parser.add_argument("--path", default=".", help="Directory for project")
+        
+        # Core stack choices (the ones that actually matter)
+        parser.add_argument("--db", "--database", 
+                          choices=["postgres", "mysql", "sqlite", "mongo"], 
+                          default="postgres",
+                          help="Database (default: postgres)")
+        
+        parser.add_argument("--auth", 
+                          choices=["jwt", "oauth2", "api-key", "none"],
+                          default="jwt", 
+                          help="Auth method (default: jwt)")
+        
+        # Feature flags for common needs
+        parser.add_argument("--ml", action="store_true", 
+                          help="ML-ready setup (models, inference, data processing)")
+        parser.add_argument("--minimal", action="store_true",
+                          help="Minimal setup (no Docker, tests, or extras)")
+        parser.add_argument("--microservice", action="store_true",
+                          help="Microservice setup (service discovery, config management)")
+        
+        # Power user options
+        parser.add_argument("--sync", action="store_true", help="Synchronous instead of async")
+        parser.add_argument("--celery", action="store_true", help="Add Celery background tasks")
+        parser.add_argument("--monitoring", action="store_true", help="Add Prometheus + health checks")
+        parser.add_argument("--python", default="3.11", help="Python version")
+        
+        # Workflow options
+        parser.add_argument("-f", "--force", action="store_true", help="Overwrite existing directory")
+        parser.add_argument("-q", "--quiet", action="store_true", help="Minimal output")
+        parser.add_argument("--interactive", action="store_true", help="Interactive customization")
+        parser.add_argument("--dry-run", action="store_true", help="Show what would be created")
+        
         return parser
 
-    def show_welcome_banner(self):
-        """Display the gorgeous welcome banner"""
-        title = Text("⚡ StartFast", style="bold bright_cyan")
-        subtitle = Text("The Django-admin startproject for FastAPI", style="italic dim white")
-        
-        banner_content = Align.center(
-            Panel(
-                Align.center(f"{title}\n{subtitle}"),
-                box=box.DOUBLE,
-                padding=(1, 2),
-                style="bright_cyan",
-                title="[bold white]Welcome[/]",
-                title_align="center"
-            )
-        )
+    def show_banner(self):
+        """Clean, confident banner"""
+        title = Text("StartFast", style="bold bright_cyan")
+        subtitle = Text("Professional FastAPI projects, instantly", style="muted")
         
         console.print()
-        console.print(banner_content)
-        console.print()
-        
-        # Show feature highlights
-        features = [
-            "🎯 Interactive Configuration",
-            "🏗️ Multiple Project Types", 
-            "💾 Database Integration",
-            "🔐 Authentication Ready",
-            "🐳 Docker Support",
-            "📊 Monitoring & Observability"
-        ]
-        
-        feature_columns = Columns(
-            [f"[bright_green]{feature}[/]" for feature in features],
-            equal=True,
-            expand=True
-        )
-        
-        console.print(Panel(
-            feature_columns,
-            title="[bold bright_blue]✨ Features[/]",
-            box=box.ROUNDED,
-            padding=(0, 1)
-        ))
+        console.print(Align.center(title))
+        console.print(Align.center(subtitle))
         console.print()
 
-    def create_project_config_from_args(self, args) -> ProjectConfig:
-        """Create project configuration from arguments"""
-        if not args.name:
-            console.print("[bold red]❌ Project name is required when not using interactive mode[/]")
-            console.print("💡 Use interactive mode: [bold cyan]startfast[/] or [bold cyan]startfast --interactive[/]")
-            sys.exit(1)
-            
-        project_path = os.path.join(args.path, args.name)
+    def detect_existing_project(self, path: str) -> Optional[str]:
+        """Smart detection of existing projects"""
+        if os.path.exists(os.path.join(path, "main.py")):
+            return "FastAPI project"
+        elif os.path.exists(os.path.join(path, "manage.py")):
+            return "Django project"
+        elif os.path.exists(os.path.join(path, "app.py")):
+            return "Flask project"
+        elif os.path.exists(os.path.join(path, "package.json")):
+            return "Node.js project"
+        return None
 
-        # Handle existing directory
-        if os.path.exists(project_path) and not args.force:
-            overwrite = Confirm.ask(
-                f"[yellow]Directory '{project_path}' already exists. Overwrite?[/]",
-                default=False
-            )
-            if not overwrite:
-                console.print("[yellow]📦 Operation cancelled.[/]")
-                sys.exit(0)
-
-        return ProjectConfig(
-            name=args.name,
-            path=project_path,
-            project_type=ProjectType(args.type),
-            database_type=DatabaseType(args.database),
-            auth_type=AuthType(args.auth),
-            is_async=not args.sync,
-            is_advanced=args.advanced,
-            include_docker=not args.no_docker,
-            include_tests=not args.no_tests,
-            include_docs=not args.no_docs,
-            include_monitoring=args.monitoring,
-            include_celery=args.celery,
-            python_version=args.python_version,
-        )
-
-    def get_project_name(self) -> str:
-        """Get project name with validation"""
-        while True:
-            name = Prompt.ask(
-                "\n[bold bright_blue]📝 What's your project name?[/]",
-                console=console
-            ).strip()
-            
-            if not name:
-                console.print("[red]❌ Project name cannot be empty[/]")
-                continue
-                
-            # Validate project name
-            if not name.replace('_', '').replace('-', '').isalnum():
-                console.print("[red]❌ Project name should only contain letters, numbers, hyphens, and underscores[/]")
-                continue
-                
-            return name
-
-    def get_project_path(self, name: str) -> str:
-        """Get project path with existence check"""
-        default_path = "."
-        path = Prompt.ask(
-            f"[bold bright_blue]📁 Where should we create '{name}'?[/]",
-            default=default_path,
-            console=console
-        )
-        
+    def quick_start_flow(self, name: str, path: str = ".") -> ProjectConfig:
+        """Fast path: smart defaults with escape hatch"""
         project_path = os.path.join(path, name)
         
-        if os.path.exists(project_path):
-            console.print(f"\n[yellow]⚠️  Directory '{project_path}' already exists[/]")
-            overwrite = Confirm.ask(
-                "[yellow]Do you want to overwrite it?[/]",
-                default=False
-            )
-            if not overwrite:
-                console.print("[yellow]📦 Operation cancelled.[/]")
+        # Check for existing project
+        existing = self.detect_existing_project(project_path)
+        if existing:
+            console.print(f"[warning]Found {existing} in {project_path}[/]")
+            if not Confirm.ask("Replace it?", default=False):
+                console.print("[muted]Cancelled[/]")
                 sys.exit(0)
-                
-        return project_path
+        
+        console.print(f"[primary]Creating {name}[/] with production defaults...")
+        console.print("[muted]PostgreSQL • JWT Auth • Docker • Tests • Async[/]")
+        
+        # Quick customization offer
+        console.print()
+        customize = Confirm.ask("[muted]Customize database or auth?[/]", default=False)
+        
+        if customize:
+            return self.minimal_customization(name, project_path)
+        
+        # Production defaults
+        return ProjectConfig(
+            name=name,
+            path=project_path,
+            project_type=ProjectType.CRUD,
+            database_type=DatabaseType.POSTGRESQL,
+            auth_type=AuthType.JWT,
+            is_async=True,
+            is_advanced=True,
+            include_docker=True,
+            include_tests=True,
+            include_docs=True,
+            include_monitoring=False,
+            include_celery=False,
+            python_version="3.11"
+        )
 
-    def select_project_type(self) -> ProjectType:
-        """Interactive project type selection with rich descriptions"""
-        options = [
-            {
-                "value": ProjectType.API,
-                "name": "Simple REST API",
-                "description": "Basic CRUD operations with clean structure",
-                "icon": "🚀",
-                "use_cases": ["Quick prototypes", "Simple backends", "Learning FastAPI"]
-            },
-            {
-                "value": ProjectType.CRUD,
-                "name": "Full CRUD API",
-                "description": "Complete database operations with advanced patterns",
-                "icon": "🏗️",
-                "use_cases": ["Production APIs", "Complex data models", "Enterprise apps"]
-            },
-            {
-                "value": ProjectType.ML_API,
-                "name": "Machine Learning API",
-                "description": "ML model serving with prediction endpoints",
-                "icon": "🤖",
-                "use_cases": ["Model deployment", "AI services", "Data science"]
-            },
-            {
-                "value": ProjectType.MICROSERVICE,
-                "name": "Microservice",
-                "description": "Service-oriented architecture ready",
-                "icon": "⚡",
-                "use_cases": ["Distributed systems", "Cloud native", "Scalable services"]
-            }
-        ]
-        
-        console.print("\n")
-        console.print(Panel(
-            "[bold bright_blue]🎯 Choose Your Project Type[/]",
-            box=box.ROUNDED,
-            style="bright_blue"
-        ))
-        
-        # Create a table to display options beautifully
-        table = Table(show_header=False, box=box.SIMPLE, padding=(0, 1))
-        table.add_column("Option", style="bold", min_width=8)
-        table.add_column("Type", style="bright_cyan", min_width=20)
-        table.add_column("Description", style="white", min_width=35)
-        table.add_column("Best For", style="dim", min_width=25)
-        
-        for i, option in enumerate(options, 1):
-            use_cases_text = " • ".join(option["use_cases"])
-            table.add_row(
-                f"[bold bright_green]{i}[/]",
-                f"{option['icon']} {option['name']}",
-                option['description'],
-                use_cases_text
-            )
-        
-        console.print(table)
+    def minimal_customization(self, name: str, project_path: str) -> ProjectConfig:
+        """Essential choices only"""
         console.print()
         
-        while True:
-            choice = IntPrompt.ask(
-                "[bold bright_blue]Select project type[/]",
-                default=1,
-                choices=["1", "2", "3", "4"],
-                console=console
-            )
-            
-            if 1 <= choice <= len(options):
-                selected = options[choice - 1]
-                console.print(f"\n[bright_green]✅ Selected: {selected['icon']} {selected['name']}[/]")
-                return selected["value"]
-
-    def select_database(self) -> DatabaseType:
-        """Interactive database selection"""
-        options = [
-            {
-                "value": DatabaseType.SQLITE,
-                "name": "SQLite",
-                "description": "Lightweight file-based database",
-                "icon": "📁",
-                "pros": ["Zero setup", "Perfect for development", "Portable"],
-                "best_for": "Development, Small apps"
-            },
-            {
-                "value": DatabaseType.POSTGRESQL,
-                "name": "PostgreSQL",
-                "description": "Advanced relational database",
-                "icon": "🐘",
-                "pros": ["Full-featured", "Excellent performance", "ACID compliant"],
-                "best_for": "Production, Complex queries"
-            },
-            {
-                "value": DatabaseType.MYSQL,
-                "name": "MySQL",
-                "description": "Popular relational database",
-                "icon": "🐬",
-                "pros": ["Wide support", "Battle-tested", "Fast reads"],
-                "best_for": "Web applications, High traffic"
-            },
-            {
-                "value": DatabaseType.MONGODB,
-                "name": "MongoDB",
-                "description": "Document-based NoSQL database",
-                "icon": "🍃",
-                "pros": ["Flexible schema", "JSON-like documents", "Horizontal scaling"],
-                "best_for": "Flexible data, Rapid development"
-            }
+        # Database choice (the one that actually impacts development)
+        db_options = [
+            ("postgres", "PostgreSQL", "Production-ready, full features"),
+            ("sqlite", "SQLite", "Development, zero setup"),
+            ("mysql", "MySQL", "High performance, wide compatibility"),
+            ("mongo", "MongoDB", "Document store, flexible schema")
         ]
         
-        console.print(Panel(
-            "[bold bright_blue]💾 Choose Your Database[/]",
-            box=box.ROUNDED,
-            style="bright_blue"
-        ))
+        console.print("[primary]Database:[/]")
+        for i, (key, name_db, desc) in enumerate(db_options, 1):
+            marker = "•" if key != "postgres" else "• [success](recommended)[/]"
+            console.print(f"  {i}. {marker} [bright_white]{name_db}[/] [muted]- {desc}[/]")
         
-        table = Table(show_header=False, box=box.SIMPLE, padding=(0, 1))
-        table.add_column("Option", style="bold", min_width=8)
-        table.add_column("Database", style="bright_cyan", min_width=18)
-        table.add_column("Description", style="white", min_width=30)
-        table.add_column("Best For", style="dim", min_width=25)
+        db_choice = IntPrompt.ask("", default=1, choices=["1", "2", "3", "4"])
+        db_key = db_options[db_choice - 1][0]
+        db_mapping = {"postgres": DatabaseType.POSTGRESQL, "sqlite": DatabaseType.SQLITE,
+                     "mysql": DatabaseType.MYSQL, "mongo": DatabaseType.MONGODB}
+        database_type = db_mapping[db_key]
         
-        for i, option in enumerate(options, 1):
-            table.add_row(
-                f"[bold bright_green]{i}[/]",
-                f"{option['icon']} {option['name']}",
-                option['description'],
-                option['best_for']
-            )
-        
-        console.print(table)
-        console.print()
-        
-        choice = IntPrompt.ask(
-            "[bold bright_blue]Select database[/]",
-            default=1,
-            choices=["1", "2", "3", "4"],
-            console=console
-        )
-        
-        selected = options[choice - 1]
-        console.print(f"\n[bright_green]✅ Selected: {selected['icon']} {selected['name']}[/]")
-        return selected["value"]
-
-    def select_authentication(self) -> AuthType:
-        """Interactive authentication selection"""
-        options = [
-            {
-                "value": AuthType.JWT,
-                "name": "JWT (JSON Web Tokens)",
-                "description": "Stateless token-based authentication",
-                "icon": "🎫",
-                "security": "High",
-                "complexity": "Medium"
-            },
-            {
-                "value": AuthType.OAUTH2,
-                "name": "OAuth2 with Scopes",
-                "description": "Enterprise-grade authorization",
-                "icon": "🔐",
-                "security": "Very High",
-                "complexity": "High"
-            },
-            {
-                "value": AuthType.API_KEY,
-                "name": "API Key",
-                "description": "Simple key-based authentication",
-                "icon": "🗝️",
-                "security": "Medium",
-                "complexity": "Low"
-            },
-            {
-                "value": AuthType.NONE,
-                "name": "No Authentication",
-                "description": "Open API (not recommended for production)",
-                "icon": "🌐",
-                "security": "None",
-                "complexity": "None"
-            }
+        # Auth choice (the other critical decision)
+        auth_options = [
+            ("jwt", "JWT tokens", "Standard, stateless auth"),
+            ("oauth2", "OAuth2 + scopes", "Enterprise, fine-grained permissions"),
+            ("api-key", "API keys", "Simple, service-to-service"),
+            ("none", "No auth", "Open API, internal use")
         ]
         
-        console.print(Panel(
-            "[bold bright_blue]🔐 Choose Authentication Method[/]",
-            box=box.ROUNDED,
-            style="bright_blue"
-        ))
+        console.print("\n[primary]Authentication:[/]")
+        for i, (key, name_auth, desc) in enumerate(auth_options, 1):
+            marker = "•" if key != "jwt" else "• [success](recommended)[/]"
+            console.print(f"  {i}. {marker} [bright_white]{name_auth}[/] [muted]- {desc}[/]")
         
-        table = Table(show_header=False, box=box.SIMPLE, padding=(0, 1))
-        table.add_column("Option", style="bold", min_width=8)
-        table.add_column("Method", style="bright_cyan", min_width=25)
-        table.add_column("Description", style="white", min_width=30)
-        table.add_column("Security", style="yellow", min_width=12)
+        auth_choice = IntPrompt.ask("", default=1, choices=["1", "2", "3", "4"])
+        auth_key = auth_options[auth_choice - 1][0]
+        auth_mapping = {"jwt": AuthType.JWT, "oauth2": AuthType.OAUTH2,
+                       "api-key": AuthType.API_KEY, "none": AuthType.NONE}
+        auth_type = auth_mapping[auth_key]
         
-        for i, option in enumerate(options, 1):
-            security_color = {
-                "Very High": "bright_green",
-                "High": "green", 
-                "Medium": "yellow",
-                "Low": "red",
-                "None": "red"
-            }.get(option["security"], "white")
-            
-            table.add_row(
-                f"[bold bright_green]{i}[/]",
-                f"{option['icon']} {option['name']}",
-                option['description'],
-                f"[{security_color}]{option['security']}[/]"
-            )
-        
-        console.print(table)
+        return ProjectConfig(
+            name=name,
+            path=project_path,
+            project_type=ProjectType.CRUD,
+            database_type=database_type,
+            auth_type=auth_type,
+            is_async=True,
+            is_advanced=True,
+            include_docker=True,
+            include_tests=True,
+            include_docs=True,
+            include_monitoring=False,
+            include_celery=False,
+            python_version="3.11"
+        )
+
+    def power_user_flow(self) -> ProjectConfig:
+        """Full customization for when you need it"""
+        self.show_banner()
+        console.print("[primary]Full customization mode[/]")
         console.print()
         
-        choice = IntPrompt.ask(
-            "[bold bright_blue]Select authentication[/]",
-            default=1,
-            choices=["1", "2", "3", "4"],
-            console=console
-        )
+        # Project name and path
+        name = Prompt.ask("[primary]Project name[/]")
+        while not name or not name.replace('-', '').replace('_', '').isalnum():
+            console.print("[error]Invalid name. Use letters, numbers, hyphens, underscores.[/]")
+            name = Prompt.ask("[primary]Project name[/]")
         
-        selected = options[choice - 1]
-        console.print(f"\n[bright_green]✅ Selected: {selected['icon']} {selected['name']}[/]")
-        return selected["value"]
-
-    def configure_advanced_options(self) -> Dict[str, Any]:
-        """Configure advanced options with beautiful prompts"""
-        console.print(Panel(
-            "[bold bright_blue]⚙️ Advanced Configuration[/]",
-            box=box.ROUNDED,
-            style="bright_blue"
-        ))
+        path = Prompt.ask("[primary]Create in[/]", default=".")
+        project_path = os.path.join(path, name)
         
-        options = {}
+        # Project type (business logic matters here)
+        console.print("\n[primary]What are you building?[/]")
+        type_options = [
+            (ProjectType.API, "Simple API", "Basic endpoints, CRUD operations"),
+            (ProjectType.CRUD, "Full backend", "User management, complex data models, production-ready"),
+            (ProjectType.ML_API, "ML service", "Model serving, data processing, inference endpoints"),
+            (ProjectType.MICROSERVICE, "Microservice", "Service mesh ready, config management, observability")
+        ]
         
-        # Async/Sync
-        options['is_async'] = Confirm.ask(
-            "[cyan]🔄 Use async/await pattern?[/] [dim](Recommended for modern FastAPI)[/]",
-            default=True
-        )
+        for i, (ptype, name_type, desc) in enumerate(type_options, 1):
+            console.print(f"  {i}. [bright_white]{name_type}[/] [muted]- {desc}[/]")
+        
+        type_choice = IntPrompt.ask("", default=2, choices=["1", "2", "3", "4"])
+        project_type = type_options[type_choice - 1][0]
+        
+        # Database
+        db_mapping = {"postgres": DatabaseType.POSTGRESQL, "mysql": DatabaseType.MYSQL, 
+                     "sqlite": DatabaseType.SQLITE, "mongo": DatabaseType.MONGODB}
+        
+        console.print(f"\n[primary]Database[/] [muted](current: PostgreSQL)[/]")
+        db_input = Prompt.ask("postgres/mysql/sqlite/mongo", default="postgres")
+        database_type = db_mapping.get(db_input.lower(), DatabaseType.POSTGRESQL)
+        
+        # Auth
+        auth_mapping = {"jwt": AuthType.JWT, "oauth2": AuthType.OAUTH2,
+                       "api-key": AuthType.API_KEY, "none": AuthType.NONE}
+        
+        console.print(f"\n[primary]Auth method[/] [muted](current: JWT)[/]")
+        auth_input = Prompt.ask("jwt/oauth2/api-key/none", default="jwt")
+        auth_type = auth_mapping.get(auth_input.lower(), AuthType.JWT)
         
         # Advanced features
-        options['is_advanced'] = Confirm.ask(
-            "[cyan]🚀 Include advanced features?[/] [dim](Middleware, background tasks, advanced routing)[/]",
-            default=False
-        )
+        console.print(f"\n[primary]Additional features[/] [muted](optional)[/]")
+        include_celery = Confirm.ask("Background tasks (Celery)", default=False)
+        include_monitoring = Confirm.ask("Monitoring (Prometheus, health checks)", default=False)
+        is_async = Confirm.ask("Async/await pattern", default=True)
         
-        return options
-
-    def configure_optional_features(self) -> Dict[str, Any]:
-        """Configure optional features"""
-        console.print(Panel(
-            "[bold bright_blue]🎁 Optional Features[/]",
-            box=box.ROUNDED,
-            style="bright_blue"
-        ))
-        
-        features = {}
-        
-        feature_options = [
-            ("include_docker", "🐳 Docker configuration", "Containerize your application", True),
-            ("include_tests", "🧪 Test setup", "Unit and integration tests with pytest", True),
-            ("include_docs", "📚 Documentation", "Auto-generated API docs and guides", True),
-            ("include_monitoring", "📊 Monitoring tools", "Prometheus metrics and health checks", False),
-            ("include_celery", "⚡ Celery integration", "Background task processing", False)
-        ]
-        
-        for key, title, description, default in feature_options:
-            features[key] = Confirm.ask(
-                f"[cyan]{title}[/] [dim]- {description}[/]",
-                default=default
-            )
-        
-        return features
-
-    def show_configuration_summary(self, config: ProjectConfig):
-        """Display beautiful configuration summary"""
-        console.print()
-        console.print(Panel(
-            "[bold bright_green]📋 Configuration Summary[/]",
-            box=box.DOUBLE,
-            style="bright_green"
-        ))
-        
-        # Create summary table
-        table = Table(show_header=False, box=None, padding=(0, 2))
-        table.add_column("Setting", style="bold bright_blue", min_width=20)
-        table.add_column("Value", style="bright_white", min_width=30)
-        
-        # Add configuration rows
-        table.add_row("📝 Project Name", config.name)
-        table.add_row("📁 Location", config.path)
-        table.add_row("🎯 Type", config.project_type.value)
-        table.add_row("💾 Database", config.database_type.value)
-        table.add_row("🔐 Authentication", config.auth_type.value)
-        table.add_row("🔄 Async/Await", "✅ Yes" if config.is_async else "❌ No")
-        table.add_row("🚀 Advanced Features", "✅ Yes" if config.is_advanced else "❌ No")
-        table.add_row("🐳 Docker", "✅ Yes" if config.include_docker else "❌ No")
-        table.add_row("🧪 Tests", "✅ Yes" if config.include_tests else "❌ No")
-        table.add_row("📚 Documentation", "✅ Yes" if config.include_docs else "❌ No")
-        table.add_row("📊 Monitoring", "✅ Yes" if config.include_monitoring else "❌ No")
-        table.add_row("⚡ Celery", "✅ Yes" if config.include_celery else "❌ No")
-        table.add_row("🐍 Python Version", config.python_version)
-        
-        console.print(table)
-        console.print()
-        
-        # Confirmation
-        proceed = Confirm.ask(
-            "[bold bright_blue]🚀 Ready to create your FastAPI project?[/]",
-            default=True
-        )
-        
-        if not proceed:
-            console.print("[yellow]📦 Operation cancelled. Come back anytime![/]")
-            sys.exit(0)
-
-    def generate_with_progress(self, config: ProjectConfig):
-        """Generate project with beautiful progress indicators"""
-        console.print()
-        
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TaskProgressColumn(),
-            console=console
-        ) as progress:
-            
-            # Simulate project generation steps
-            steps = [
-                ("🏗️ Creating project structure", 0.2),
-                ("📝 Generating configuration files", 0.15),
-                ("💾 Setting up database models", 0.15),
-                ("🔐 Configuring authentication", 0.15),
-                ("🐳 Creating Docker setup", 0.1),
-                ("🧪 Setting up tests", 0.1),
-                ("📚 Generating documentation", 0.1),
-                ("✨ Finalizing project", 0.05)
-            ]
-            
-            total_task = progress.add_task("[cyan]Generating FastAPI project...", total=100)
-            
-            for step_name, duration in steps:
-                step_task = progress.add_task(step_name, total=100)
-                
-                # Simulate work for each step
-                for i in range(100):
-                    time.sleep(duration / 100)  # Simulate work
-                    progress.update(step_task, advance=1)
-                    progress.update(total_task, advance=duration)
-                
-                progress.remove_task(step_task)
-        
-        # Generate the actual project (you'll replace the simulation above with this)
-        generator = ProjectGenerator(config)
-        generator.generate()
-
-    def show_success_message(self, config: ProjectConfig):
-        """Show beautiful success message with next steps"""
-        console.print()
-        
-        # Success panel
-        success_content = Align.center(
-            f"[bold bright_green]🎉 Project '{config.name}' created successfully![/]\n"
-            f"[bright_white]📁 Location: {config.path}[/]\n"
-            f"[bright_white]🔧 Type: {config.project_type.value}[/]\n"
-            f"[bright_white]💾 Database: {config.database_type.value}[/]\n"
-            f"[bright_white]🔐 Auth: {config.auth_type.value}[/]"
-        )
-        
-        console.print(Panel(
-            success_content,
-            title="[bold bright_green]✅ Success![/]",
-            box=box.DOUBLE,
-            style="bright_green",
-            padding=(1, 2)
-        ))
-        
-        # Next steps
-        console.print(Panel(
-            "[bold bright_blue]🚀 Next Steps[/]\n\n"
-            f"[bright_white]1.[/] [cyan]cd {config.name}[/]\n"
-            "[bright_white]2.[/] [cyan]pip install -r requirements.txt[/]\n"
-            "[bright_white]3.[/] [cyan]uvicorn app.main:app --reload[/]\n"
-            "[bright_white]4.[/] [cyan]Open http://localhost:8000[/]\n\n"
-            "[dim]💡 Check out the README.md for detailed setup instructions![/]",
-            title="[bold bright_blue]🎯 Get Started[/]",
-            box=box.ROUNDED,
-            style="bright_blue"
-        ))
-        
-        console.print("\n[dim]Made with ❤️  by StartFast[/]")
-
-    def interactive_config(self) -> ProjectConfig:
-        """Full interactive configuration experience"""
-        self.show_welcome_banner()
-        
-        # Get basic project info
-        name = self.get_project_name()
-        project_path = self.get_project_path(name)
-        
-        # Select project configuration
-        project_type = self.select_project_type()
-        database_type = self.select_database()
-        auth_type = self.select_authentication()
-        
-        # Advanced options
-        advanced_opts = self.configure_advanced_options()
-        
-        # Optional features
-        optional_features = self.configure_optional_features()
-        
-        # Python version
-        python_version = Prompt.ask(
-            "[cyan]🐍 Python version[/]",
-            default="3.11"
-        )
-        
-        # Create configuration
-        config = ProjectConfig(
+        return ProjectConfig(
             name=name,
             path=project_path,
             project_type=project_type,
             database_type=database_type,
             auth_type=auth_type,
-            python_version=python_version,
-            **advanced_opts,
-            **optional_features
+            is_async=is_async,
+            is_advanced=True,
+            include_docker=True,
+            include_tests=True,
+            include_docs=True,
+            include_monitoring=include_monitoring,
+            include_celery=include_celery,
+            python_version="3.11"
         )
+
+    def create_config_from_args(self, args) -> ProjectConfig:
+        """Convert CLI args to config"""
+        if not args.name:
+            console.print("[error]Project name required[/]")
+            console.print("[muted]Try: startfast my-api[/]")
+            sys.exit(1)
+            
+        project_path = os.path.join(args.path, args.name)
         
-        # Show summary and confirm
-        self.show_configuration_summary(config)
+        # Handle existing directory
+        if os.path.exists(project_path) and not args.force:
+            existing = self.detect_existing_project(project_path)
+            if existing:
+                console.print(f"[warning]Found {existing} in {project_path}[/]")
+            if not Confirm.ask("Replace it?", default=False):
+                console.print("[muted]Cancelled[/]")
+                sys.exit(0)
         
-        return config
+        # Map CLI args to enums
+        db_mapping = {"postgres": DatabaseType.POSTGRESQL, "mysql": DatabaseType.MYSQL,
+                     "sqlite": DatabaseType.SQLITE, "mongo": DatabaseType.MONGODB}
+        auth_mapping = {"jwt": AuthType.JWT, "oauth2": AuthType.OAUTH2, 
+                       "api-key": AuthType.API_KEY, "none": AuthType.NONE}
+        
+        # Determine project type
+        if args.ml:
+            project_type = ProjectType.ML_API
+        elif args.microservice:
+            project_type = ProjectType.MICROSERVICE
+        elif args.minimal:
+            project_type = ProjectType.API
+        else:
+            project_type = ProjectType.CRUD
+            
+        return ProjectConfig(
+            name=args.name,
+            path=project_path,
+            project_type=project_type,
+            database_type=db_mapping[args.db],
+            auth_type=auth_mapping[args.auth],
+            is_async=not args.sync,
+            is_advanced=not args.minimal,
+            include_docker=not args.minimal,
+            include_tests=not args.minimal,
+            include_docs=not args.minimal,
+            include_monitoring=args.monitoring,
+            include_celery=args.celery,
+            python_version=args.python
+        )
+
+    def show_config_preview(self, config: ProjectConfig, dry_run: bool = False):
+        """Clean, scannable config summary"""
+        action = "Would create" if dry_run else "Creating"
+        console.print(f"\n[success]{action}[/] [bright_white]{config.name}[/]")
+        
+        # Essential info only
+        details = [
+            f"Database: {config.database_type.value}",
+            f"Auth: {config.auth_type.value}",
+            f"Python: {config.python_version}"
+        ]
+        
+        if config.include_celery:
+            details.append("Celery: Yes")
+        if config.include_monitoring:
+            details.append("Monitoring: Yes")
+            
+        console.print("[muted]" + " • ".join(details) + "[/]")
+        
+        if not dry_run and not Confirm.ask("\nProceed?", default=True):
+            console.print("[muted]Cancelled[/]")
+            sys.exit(0)
+
+    def generate_with_progress(self, config: ProjectConfig):
+        """Efficient progress display"""
+        with console.status("[primary]Generating project...[/]", spinner="dots") as status:
+            # Actual generation
+            generator = ProjectGenerator(config)
+            generator.generate()
+            time.sleep(0.5)  # Brief pause for perception of completion
+
+    def show_completion(self, config: ProjectConfig, quiet: bool = False):
+        """Success message optimized for next action"""
+        if quiet:
+            console.print(f"[success]✓[/] {config.name}")
+            return
+            
+        console.print(f"\n[success]✓[/] [bright_white]{config.name}[/] ready")
+        
+        # Immediate next steps (what they actually need)
+        console.print(f"\n[primary]cd {config.name}[/]")
+        console.print("[primary]pip install -r requirements.txt[/]") 
+        console.print("[primary]uvicorn app.main:app --reload[/]")
+        
+        # Useful endpoints
+        console.print(f"\n[muted]API docs: http://localhost:8000/docs[/]")
+        if config.auth_type != AuthType.NONE:
+            console.print(f"[muted]Auth: POST /auth/login[/]")
 
     def main(self):
-        """Main entry point with enhanced experience"""
+        """Main entry point with intelligent flow detection"""
         try:
             parser = self.create_argument_parser()
             args = parser.parse_args()
-
-            # Configure logging level
-            if args.verbose:
-                logging.getLogger().setLevel(logging.DEBUG)
-
-            # Interactive mode by default (unless disabled or name provided)
-            use_interactive = not args.no_interactive and not args.name
             
-            if use_interactive:
-                config = self.interactive_config()
+            # Flow routing based on user intent
+            if args.interactive:
+                # Power user wants full control
+                config = self.power_user_flow()
+            elif args.name:
+                # CLI user with specific requirements  
+                config = self.create_config_from_args(args)
             else:
-                # Command line mode
-                config = self.create_project_config_from_args(args)
-
-            # Generate project with progress
+                # Interactive quick start (most common)
+                self.show_banner()
+                name = Prompt.ask("[primary]Project name[/]")
+                config = self.quick_start_flow(name, args.path)
+            
+            # Show what we're about to do
+            if not args.quiet:
+                self.show_config_preview(config, args.dry_run)
+            
+            if args.dry_run:
+                return
+                
+            # Generate the project
             self.generate_with_progress(config)
             
-            # Show success message
-            self.show_success_message(config)
-
+            # Show completion with next steps
+            self.show_completion(config, args.quiet)
+            
         except KeyboardInterrupt:
-            console.print("\n[yellow]👋 Operation cancelled by user. See you next time![/]")
+            console.print("\n[muted]Cancelled[/]")
             sys.exit(1)
         except Exception as e:
-            console.print(f"\n[bold red]❌ Error generating project:[/] {e}")
-            if args.verbose:
-                console.print_exception()
+            console.print(f"\n[error]Error: {e}[/]")
             sys.exit(1)
 
 
