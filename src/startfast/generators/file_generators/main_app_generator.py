@@ -184,18 +184,11 @@ async def lifespan(app: FastAPI):
             DatabaseType.POSTGRESQL,
             DatabaseType.MYSQL,
         ]:
-            if self.config.is_async:
-                startup_lines.append("    from app.db.database import init_db")
-                startup_lines.append("    await init_db()")
-                startup_lines.append(
-                    '    logger.info("✅ Database initialized successfully")'
-                )
-            else:
-                startup_lines.append("    from app.db.database import init_db")
-                startup_lines.append("    init_db()")
-                startup_lines.append(
-                    '    logger.info("✅ Database initialized successfully")'
-                )
+            startup_lines.append("    from app.db.database import init_db")
+            startup_lines.append("    await init_db()")
+            startup_lines.append(
+                '    logger.info("✅ Database initialized successfully")'
+            )
 
         if self.config.database_type == DatabaseType.MONGODB:
             startup_lines.append("    from app.db.database import init_db")

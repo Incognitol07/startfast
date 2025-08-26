@@ -71,10 +71,7 @@ async def health_check():
         if self.config.auth_type == AuthType.JWT:
             if self.should_generate_sqlalchemy_files():
                 # SQL database imports
-                if self.config.is_async:
-                    database_imports = "from app.db.database import get_db\nfrom sqlalchemy.ext.asyncio import AsyncSession\nfrom app.models.auth import User"
-                else:
-                    database_imports = "from app.db.database import get_db\nfrom sqlalchemy.orm import Session\nfrom app.models.auth import User"
+                database_imports = "from app.db.database import get_db\nfrom sqlalchemy.ext.asyncio import AsyncSession\nfrom app.models.auth import User"
             elif self.config.database_type.value == "mongodb":
                 # MongoDB imports
                 database_imports = "from app.schemas.auth import User"
@@ -101,14 +98,9 @@ async def health_check():
         """Get JWT authentication endpoints"""
 
         # Original SQL-based JWT auth endpoints
-        if self.config.is_async:
-            session_import = "from sqlalchemy.ext.asyncio import AsyncSession"
-            session_type = "AsyncSession"
-            await_keyword = "await "
-        else:
-            session_import = "from sqlalchemy.orm import Session"
-            session_type = "Session"
-            await_keyword = ""
+        session_import = "from sqlalchemy.ext.asyncio import AsyncSession"
+        session_type = "AsyncSession"
+        await_keyword = "await "
 
         return f'''"""
 JWT Authentication Endpoints
@@ -189,10 +181,7 @@ async def update_user_me(
         """Get OAuth2 authentication endpoints"""
         if self.should_generate_sqlalchemy_files():
             # OAuth2 with database backend
-            if self.config.is_async:
-                return self._get_oauth2_with_db_async_endpoints()
-            else:
-                return self._get_oauth2_with_db_sync_endpoints()
+            return self._get_oauth2_with_db_async_endpoints()
         else:
             # OAuth2 without database (simple implementation)
             return self._get_oauth2_simple_endpoints()
@@ -278,86 +267,6 @@ async def update_user_me(
     return current_user
 '''
 
-    def _get_oauth2_with_db_sync_endpoints(self) -> str:
-        """Get OAuth2 endpoints with sync database support"""
-        return '''"""
-OAuth2 Authentication Endpoints with Database
-"""
-
-from datetime import timedelta
-from fastapi import APIRouter, Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordRequestForm
-from sqlalchemy.orm import Session
-from app.core.config import settings
-from app.db.database import get_db
-from app.schemas.auth import Token, UserCreate, User as UserSchema
-from app.core.security import (
-    authenticate_user, 
-    create_access_token, 
-    get_current_active_user,
-    get_user_by_email,
-    create_user
-)
-
-router = APIRouter()
-
-
-@router.post("/token", response_model=Token)
-async def login_for_access_token(
-    form_data: OAuth2PasswordRequestForm = Depends(),
-    db: Session = Depends(get_db)
-):
-    """OAuth2 compatible token login, get an access token for future requests"""
-    user = authenticate_user(db, form_data.username, form_data.password)
-    if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Incorrect username or password",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    access_token = create_access_token(
-        data={"sub": str(user.id)}, expires_delta=access_token_expires
-    )
-    return {"access_token": access_token, "token_type": "bearer"}
-
-
-@router.post("/register", response_model=UserSchema, status_code=status.HTTP_201_CREATED)
-async def register_user(
-    user_data: UserCreate,
-    db: Session = Depends(get_db)
-):
-    """Register new user"""
-    # Check if user already exists
-    existing_user = get_user_by_email(db, user_data.email)
-    if existing_user:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Email already registered"
-        )
-    
-    # Create new user
-    user = create_user(db, user_data.email, user_data.password)
-    return user
-
-
-@router.get("/me", response_model=UserSchema)
-async def read_users_me(current_user: UserSchema = Depends(get_current_active_user)):
-    """Get current user information"""
-    return current_user
-
-
-@router.put("/me", response_model=UserSchema)
-async def update_user_me(
-    user_update: dict,
-    current_user: UserSchema = Depends(get_current_active_user),
-    db: Session = Depends(get_db)
-):    
-    """Update current user information"""
-    # Implementation for updating user profile
-    # This is a placeholder - implement based on your needs
-    return current_user
-'''
 
     def _get_oauth2_simple_endpoints(self) -> str:
         """Get simple OAuth2 endpoints without database"""

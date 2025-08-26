@@ -91,6 +91,7 @@ my-api/
 ```
 
 **Everything configured correctly:**
+
 - Async database connections
 - Password hashing with bcrypt
 - JWT token authentication

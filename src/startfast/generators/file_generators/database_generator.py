@@ -36,8 +36,7 @@ class DatabaseGenerator(BaseGenerator):
 
     def _get_sqlalchemy_template(self) -> str:
         """Get SQLAlchemy database template"""
-        if self.config.is_async:
-            template = '''"""
+        template = '''"""
 Async SQLAlchemy Database Configuration
 """
 
@@ -95,58 +94,6 @@ async def drop_db():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 '''
-        else:
-            template = '''"""
-SQLAlchemy Database Configuration
-"""
-
-from sqlalchemy import create_engine
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
-from app.core.config import settings
-
-# Create engine
-engine = create_engine(
-    settings.DATABASE_URL,
-    echo=settings.DEBUG,
-)
-
-# Create session factory
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-
-# Create base class for models
-Base = declarative_base()
-
-
-def get_db() -> Session:
-    """Dependency to get database session"""
-    db = SessionLocal()
-    try:
-        yield db
-        db.commit()
-    except Exception:
-        db.rollback()
-        raise    finally:
-        db.close()
-
-
-def init_db():
-    """Initialize database - create all tables"""
-    from app.db.base import Base
-    
-    # Import all models to ensure they are registered with Base
-    import app.models.auth 
-    
-    # Create all tables
-    Base.metadata.create_all(bind=engine)
-
-
-def drop_db():
-    """Drop all tables - useful for testing"""
-    from app.db.base import Base
-    Base.metadata.drop_all(bind=engine)
-'''
-
         return template
 
     def _get_base_model_template(self) -> str:
@@ -184,8 +131,7 @@ class BaseModel(Base, TimestampMixin):
 
     def _get_mongodb_template(self) -> str:
         """Get MongoDB database template"""
-        if self.config.is_async:
-            template = '''"""
+        template = '''"""
 Async MongoDB Database Configuration
 """
 
@@ -216,37 +162,4 @@ async def get_database():
     """Get database instance"""
     return client.get_default_database()
 '''
-        else:
-            template = '''"""
-MongoDB Database Configuration
-"""
-
-from pymongo import MongoClient
-from mongoengine import connect, disconnect
-from app.core.config import settings
-
-# MongoDB client
-client: MongoClient = None
-
-
-def connect_to_mongo():
-    """Create database connection"""
-    global client
-    client = MongoClient(settings.DATABASE_URL)
-    connect(host=settings.DATABASE_URL)
-
-
-def close_mongo_connection():
-    """Close database connection"""
-    global client
-    if client:
-        client.close()
-    disconnect()
-
-
-def get_database():
-    """Get database instance"""
-    return client.get_default_database()
-'''
-
         return template

@@ -46,7 +46,6 @@ class BaseGenerator(ABC):
                 word.capitalize()
                 for word in self.config.name.replace("-", "_").split("_")
             ),
-            "is_async": self.config.is_async,
             "is_advanced": self.config.is_advanced,
             "database_type": self.config.database_type.value,
             "auth_type": self.config.auth_type.value,
@@ -71,42 +70,27 @@ class BaseGenerator(ABC):
             DatabaseType.POSTGRESQL,
             DatabaseType.MYSQL,
         ]:
-            if self.config.is_async:
-                return {
-                    "session_import": "from sqlalchemy.ext.asyncio import AsyncSession",
-                    "session_type": "AsyncSession",
-                    "base_import": "from app.db.base import BaseModel",
-                    "dependency_import": "from app.db.database import get_db",
-                    "dependency_type": "AsyncSession = Depends(get_db)",
-                }
-            else:
-                return {
-                    "session_import": "from sqlalchemy.orm import Session",
-                    "session_type": "Session",
-                    "base_import": "from app.db.base import BaseModel",
-                    "dependency_import": "from app.db.database import get_db",
-                    "dependency_type": "Session = Depends(get_db)",
-                }
+            return {
+                "session_import": "from sqlalchemy.ext.asyncio import AsyncSession",
+                "session_type": "AsyncSession",
+                "base_import": "from app.db.base import BaseModel",
+                "dependency_import": "from app.db.database import get_db",
+                "dependency_type": "AsyncSession = Depends(get_db)",
+            }
         elif self.config.database_type == DatabaseType.MONGODB:
             return {
                 "session_import": (
                     "from motor.motor_asyncio import AsyncIOMotorClient"
-                    if self.config.is_async
-                    else "from pymongo import MongoClient"
                 ),
                 "session_type": (
-                    "AsyncIOMotorClient" if self.config.is_async else "MongoClient"
+                    "AsyncIOMotorClient"
                 ),
                 "base_import": (
                     "from beanie import Document"
-                    if self.config.is_async
-                    else "from mongoengine import Document"
                 ),
                 "dependency_import": "from app.db.database import get_db",
                 "dependency_type": (
                     "AsyncIOMotorClient = Depends(get_db)"
-                    if self.config.is_async
-                    else "MongoClient = Depends(get_db)"
                 ),
             }
 

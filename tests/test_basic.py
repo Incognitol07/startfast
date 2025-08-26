@@ -32,7 +32,6 @@ class TestProjectConfig:
         assert config.project_type == ProjectType.API
         assert config.database_type == DatabaseType.SQLITE
         assert config.auth_type == AuthType.JWT
-        assert config.is_async is True  # Default value
         assert config.include_docker is True  # Default value
 
     def test_project_config_validation(self):

@@ -78,40 +78,23 @@ LOG_FILE=
         from ...core.config import DatabaseType
 
         if self.config.database_type == DatabaseType.SQLITE:
-            if self.config.is_async:
-                return "DATABASE_URL=sqlite+aiosqlite:///./app.db"
-            else:
-                return "DATABASE_URL=sqlite:///./app.db"
+            return "DATABASE_URL=sqlite+aiosqlite:///./app.db"
         elif self.config.database_type == DatabaseType.POSTGRESQL:
-            if self.config.is_async:
-                return """DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/dbname
+            return """DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/dbname
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
 DATABASE_NAME=dbname
 DATABASE_USER=user
 DATABASE_PASSWORD=password"""
-            else:
-                return """DATABASE_URL=postgresql://user:password@localhost:5432/dbname
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_NAME=dbname
-DATABASE_USER=user
-DATABASE_PASSWORD=password"""
+            
         elif self.config.database_type == DatabaseType.MYSQL:
-            if self.config.is_async:
-                return """DATABASE_URL=mysql+aiomysql://user:password@localhost:3306/dbname
+            return """DATABASE_URL=mysql+aiomysql://user:password@localhost:3306/dbname
 DATABASE_HOST=localhost
 DATABASE_PORT=3306
 DATABASE_NAME=dbname
 DATABASE_USER=user
 DATABASE_PASSWORD=password"""
-            else:
-                return """DATABASE_URL=mysql+pymysql://user:password@localhost:3306/dbname
-DATABASE_HOST=localhost
-DATABASE_PORT=3306
-DATABASE_NAME=dbname
-DATABASE_USER=user
-DATABASE_PASSWORD=password"""
+            
         elif self.config.database_type == DatabaseType.MONGODB:
             return """MONGODB_URL=mongodb://localhost:27017/dbname
 MONGODB_HOST=localhost
@@ -124,40 +107,23 @@ MONGODB_NAME=dbname"""
         from ...core.config import DatabaseType
 
         if self.config.database_type == DatabaseType.SQLITE:
-            if self.config.is_async:
-                return "DATABASE_URL=sqlite+aiosqlite:///./app.db"
-            else:
-                return "DATABASE_URL=sqlite:///./app.db"
+            return "DATABASE_URL=sqlite+aiosqlite:///./app.db"
         elif self.config.database_type == DatabaseType.POSTGRESQL:
-            if self.config.is_async:
-                return """DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/dbname
+            return """DATABASE_URL=postgresql+asyncpg://user:password@localhost:5432/dbname
 DATABASE_HOST=localhost
 DATABASE_PORT=5432
 DATABASE_NAME=your_db_name
 DATABASE_USER=your_db_user
 DATABASE_PASSWORD=your_db_password"""
-            else:
-                return """DATABASE_URL=postgresql://user:password@localhost:5432/dbname
-DATABASE_HOST=localhost
-DATABASE_PORT=5432
-DATABASE_NAME=your_db_name
-DATABASE_USER=your_db_user
-DATABASE_PASSWORD=your_db_password"""
+            
         elif self.config.database_type == DatabaseType.MYSQL:
-            if self.config.is_async:
-                return """DATABASE_URL=mysql+aiomysql://user:password@localhost:3306/dbname
+            return """DATABASE_URL=mysql+aiomysql://user:password@localhost:3306/dbname
 DATABASE_HOST=localhost
 DATABASE_PORT=3306
 DATABASE_NAME=your_db_name
 DATABASE_USER=your_db_user
 DATABASE_PASSWORD=your_db_password"""
-            else:
-                return """DATABASE_URL=mysql+pymysql://user:password@localhost:3306/dbname
-DATABASE_HOST=localhost
-DATABASE_PORT=3306
-DATABASE_NAME=your_db_name
-DATABASE_USER=your_db_user
-DATABASE_PASSWORD=your_db_password"""
+            
         elif self.config.database_type == DatabaseType.MONGODB:
             return """MONGODB_URL=mongodb://localhost:27017/dbname
 MONGODB_HOST=localhost

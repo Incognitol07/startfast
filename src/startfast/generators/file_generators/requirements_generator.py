@@ -34,15 +34,12 @@ class RequirementsGenerator(BaseGenerator):
             "email-validator>=1.1.3",
         ]
 
-        if self.config.is_async:
-            requirements.extend(
-                [
-                    "aiofiles>=23.2.1",
-                    "httpx>=0.25.2",
-                ]
-            )
-        else:
-            requirements.append("requests>=2.31.0")
+        requirements.extend(
+            [
+                "aiofiles>=23.2.1",
+                "httpx>=0.25.2",
+            ]
+        )
 
         return requirements
 
@@ -54,32 +51,28 @@ class RequirementsGenerator(BaseGenerator):
             requirements.extend(
                 [
                     "sqlalchemy>=2.0.23",
-                    "aiosqlite>=0.19.0" if self.config.is_async else "sqlite3",
+                    "aiosqlite>=0.19.0",
                 ]
             )
         elif self.config.database_type == DatabaseType.POSTGRESQL:
             requirements.extend(
                 [
                     "sqlalchemy>=2.0.23",
-                    (
-                        "asyncpg>=0.29.0"
-                        if self.config.is_async
-                        else "psycopg2-binary>=2.9.9"
-                    ),
+                    "asyncpg>=0.29.0"
                 ]
             )
         elif self.config.database_type == DatabaseType.MYSQL:
             requirements.extend(
                 [
                     "sqlalchemy>=2.0.23",
-                    "aiomysql>=0.2.0" if self.config.is_async else "PyMySQL>=1.1.0",
+                    "aiomysql>=0.2.0",
                 ]
             )
         elif self.config.database_type == DatabaseType.MONGODB:
             requirements.extend(
                 [
-                    "motor>=3.3.2" if self.config.is_async else "pymongo>=4.6.0",
-                    "beanie>=1.23.6" if self.config.is_async else "mongoengine>=0.27.0",
+                    "motor>=3.3.2",
+                    "beanie>=1.23.6",
                 ]
             )
 
@@ -138,8 +131,6 @@ class RequirementsGenerator(BaseGenerator):
                 [
                     "alembic>=1.13.1",  # Database migrations
                     "python-dotenv>=1.0.0",  # Environment variables
-                    "rich>=13.7.0",  # Rich console output
-                    "typer>=0.9.0",  # CLI interface
                 ]
             )
 

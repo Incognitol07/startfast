@@ -143,7 +143,6 @@ class ProjectGenerator(BaseGenerator):
             "auth_type": self.config.auth_type.value,
             "generators_used": list(self.generators.keys()),
             "features": {
-                "async": self.config.is_async,
                 "advanced": self.config.is_advanced,
                 "docker": self.config.include_docker,
                 "tests": self.config.include_tests,

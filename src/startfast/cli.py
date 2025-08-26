@@ -80,7 +80,6 @@ Examples:
                           help="Minimal setup (no Docker, tests, or extras)")
         
         # Power user options
-        parser.add_argument("--sync", action="store_true", help="Synchronous instead of async")
         parser.add_argument("--celery", action="store_true", help="Add Celery background tasks")
         parser.add_argument("--monitoring", action="store_true", help="Add Prometheus + health checks")
         parser.add_argument("--python", default="3.11", help="Python version")
@@ -144,7 +143,6 @@ Examples:
             project_type=ProjectType.CRUD,
             database_type=DatabaseType.POSTGRESQL,
             auth_type=AuthType.JWT,
-            is_async=True,
             is_advanced=True,
             include_docker=True,
             include_tests=True,
@@ -202,7 +200,6 @@ Examples:
             project_type=ProjectType.CRUD,
             database_type=database_type,
             auth_type=auth_type,
-            is_async=True,
             is_advanced=True,
             include_docker=True,
             include_tests=True,
@@ -260,7 +257,6 @@ Examples:
         console.print(f"\n[primary]Additional features[/] [muted](optional)[/]")
         include_celery = Confirm.ask("Background tasks (Celery)", default=False)
         include_monitoring = Confirm.ask("Monitoring (Prometheus, health checks)", default=False)
-        is_async = Confirm.ask("Async/await pattern", default=True)
         
         return ProjectConfig(
             name=name,
@@ -268,7 +264,6 @@ Examples:
             project_type=project_type,
             database_type=database_type,
             auth_type=auth_type,
-            is_async=is_async,
             is_advanced=True,
             include_docker=True,
             include_tests=True,
@@ -313,7 +308,6 @@ Examples:
             project_type=project_type,
             database_type=db_mapping[args.db],
             auth_type=auth_mapping[args.auth],
-            is_async=not args.sync,
             is_advanced=not args.minimal,
             include_docker=not args.minimal,
             include_tests=not args.minimal,
