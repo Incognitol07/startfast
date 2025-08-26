@@ -26,7 +26,6 @@ class DatabaseType(Enum):
     POSTGRESQL = "postgresql"
     MYSQL = "mysql"
     MONGODB = "mongodb"
-    REDIS = "redis"
 
 
 class AuthType(Enum):

@@ -20,9 +20,7 @@ class DatabaseGenerator(BaseGenerator):
             self._generate_sqlalchemy_files()
         elif self.config.database_type == DatabaseType.MONGODB:
             self._generate_mongodb_files()
-        elif self.config.database_type == DatabaseType.REDIS:
-            self._generate_redis_files()
-
+    
     def _generate_sqlalchemy_files(self):
         """Generate SQLAlchemy database files"""
         database_content = self._get_sqlalchemy_template()
@@ -34,11 +32,6 @@ class DatabaseGenerator(BaseGenerator):
     def _generate_mongodb_files(self):
         """Generate MongoDB database files"""
         database_content = self._get_mongodb_template()
-        self.write_file(f"{self.config.path}/app/db/database.py", database_content)
-
-    def _generate_redis_files(self):
-        """Generate Redis database files"""
-        database_content = self._get_redis_template()
         self.write_file(f"{self.config.path}/app/db/database.py", database_content)
 
     def _get_sqlalchemy_template(self) -> str:
@@ -254,77 +247,6 @@ def close_mongo_connection():
 def get_database():
     """Get database instance"""
     return client.get_default_database()
-'''
-
-        return template
-
-    def _get_redis_template(self) -> str:
-        """Get Redis database template"""
-        if self.config.is_async:
-            template = '''"""
-Async Redis Database Configuration
-"""
-
-import aioredis
-from app.core.config import settings
-
-# Redis connection pool
-redis_pool = None
-
-
-async def connect_to_redis():
-    """Create Redis connection pool"""
-    global redis_pool
-    redis_pool = aioredis.ConnectionPool.from_url(
-        settings.DATABASE_URL,
-        encoding="utf-8",
-        decode_responses=True
-    )
-
-
-async def close_redis_connection():
-    """Close Redis connection pool"""
-    global redis_pool
-    if redis_pool:
-        await redis_pool.disconnect()
-
-
-async def get_redis():
-    """Get Redis connection"""
-    return aioredis.Redis(connection_pool=redis_pool)
-'''
-        else:
-            template = '''"""
-Redis Database Configuration
-"""
-
-import redis
-from app.core.config import settings
-
-# Redis connection pool
-redis_pool = None
-
-
-def connect_to_redis():
-    """Create Redis connection pool"""
-    global redis_pool
-    redis_pool = redis.ConnectionPool.from_url(
-        settings.DATABASE_URL,
-        encoding="utf-8",
-        decode_responses=True
-    )
-
-
-def close_redis_connection():
-    """Close Redis connection pool"""
-    global redis_pool
-    if redis_pool:
-        redis_pool.disconnect()
-
-
-def get_redis():
-    """Get Redis connection"""
-    return redis.Redis(connection_pool=redis_pool)
 '''
 
         return template

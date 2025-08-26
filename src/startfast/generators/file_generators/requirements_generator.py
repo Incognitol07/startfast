@@ -82,13 +82,6 @@ class RequirementsGenerator(BaseGenerator):
                     "beanie>=1.23.6" if self.config.is_async else "mongoengine>=0.27.0",
                 ]
             )
-        elif self.config.database_type == DatabaseType.REDIS:
-            requirements.extend(
-                [
-                    "redis>=5.0.1",
-                    "aioredis>=2.0.1" if self.config.is_async else "",
-                ]
-            )
 
         return [req for req in requirements if req]  # Filter empty strings
 

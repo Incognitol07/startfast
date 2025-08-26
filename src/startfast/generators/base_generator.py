@@ -109,22 +109,6 @@ class BaseGenerator(ABC):
                     else "MongoClient = Depends(get_db)"
                 ),
             }
-        elif self.config.database_type == DatabaseType.REDIS:
-            return {
-                "session_import": (
-                    "import aioredis" if self.config.is_async else "import redis"
-                ),
-                "session_type": (
-                    "aioredis.Redis" if self.config.is_async else "redis.Redis"
-                ),
-                "base_import": "from pydantic import BaseModel",
-                "dependency_import": "from app.db.database import get_redis",
-                "dependency_type": (
-                    "aioredis.Redis = Depends(get_redis)"
-                    if self.config.is_async
-                    else "redis.Redis = Depends(get_redis)"
-                ),
-            }
 
         # Default fallback
         return {
@@ -147,8 +131,6 @@ class BaseGenerator(ABC):
             return "BaseModel"
         elif self.config.database_type == DatabaseType.MONGODB:
             return "Document"
-        elif self.config.database_type == DatabaseType.REDIS:
-            return "BaseModel"  # Pydantic BaseModel for Redis
 
         return "BaseModel"
 

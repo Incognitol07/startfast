@@ -101,8 +101,6 @@ networks:
             return "      - mysql"
         elif self.config.database_type == DatabaseType.MONGODB:
             return "      - mongodb"
-        elif self.config.database_type == DatabaseType.REDIS:
-            return "      - redis"
         return ""
 
     def _get_database_services(self) -> str:
@@ -145,15 +143,6 @@ networks:
       - "27017:27017"
     volumes:
       - mongodb_data:/data/db
-    restart: unless-stopped"""
-
-        elif self.config.database_type == DatabaseType.REDIS:
-            return """  redis:
-    image: redis:7
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis_data:/data
     restart: unless-stopped"""
 
         return ""
@@ -202,8 +191,6 @@ networks:
             volumes.append("  mysql_data:")
         elif self.config.database_type == DatabaseType.MONGODB:
             volumes.append("  mongodb_data:")
-        elif self.config.database_type == DatabaseType.REDIS:
-            volumes.append("  redis_data:")
 
         return "\n".join(volumes)
 

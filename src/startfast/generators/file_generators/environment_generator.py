@@ -117,11 +117,6 @@ DATABASE_PASSWORD=password"""
 MONGODB_HOST=localhost
 MONGODB_PORT=27017
 MONGODB_NAME=dbname"""
-        elif self.config.database_type == DatabaseType.REDIS:
-            return """REDIS_URL=redis://localhost:6379/0
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_DB=0"""
         return ""
 
     def _get_database_env_vars_example(self) -> str:
@@ -168,11 +163,6 @@ DATABASE_PASSWORD=your_db_password"""
 MONGODB_HOST=localhost
 MONGODB_PORT=27017
 MONGODB_NAME=your_db_name"""
-        elif self.config.database_type == DatabaseType.REDIS:
-            return """REDIS_URL=redis://localhost:6379/0
-REDIS_HOST=localhost
-REDIS_PORT=6379
-REDIS_DB=0"""
         return ""
 
     def _get_security_env_vars(self) -> str:

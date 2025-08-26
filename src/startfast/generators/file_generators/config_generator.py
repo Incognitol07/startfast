@@ -82,11 +82,7 @@ settings = Settings()
     MONGODB_HOST: str = "localhost"
     MONGODB_PORT: int = 27017
     MONGODB_NAME: str"""
-        elif self.config.database_type == DatabaseType.REDIS:
-            return """    REDIS_URL: str
-    REDIS_HOST: str = "localhost"
-    REDIS_PORT: int = 6379
-    REDIS_DB: int = 0"""
+        
         return ""
 
     def _get_security_settings(self) -> str:
