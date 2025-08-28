@@ -2,7 +2,7 @@
 
 # ⚡ StartFast
 
-**The production-ready FastAPI project structure that senior developers spend 4+ hours building from scratch.**
+**The production-ready FastAPI project structure that senior developers spend time building from scratch.**
 
 *Skip the boilerplate. Ship the features.*
 
